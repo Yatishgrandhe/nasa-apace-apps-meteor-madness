@@ -133,7 +133,7 @@ export async function fetchCometData(): Promise<CometObject[]> {
           approach_date: new Date(Date.now() + Math.random() * 730 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Next 2 years
           is_hazardous: Math.random() < 0.15, // 15% chance of being hazardous
           magnitude: Math.random() * 12 + 12, // Magnitude (12-24)
-          orbit_class: ['Long Period', 'Short Period', 'Halley-type', 'Jupiter Family'][Math.floor(Math.random() * 4)],
+          orbit_class: ['Apollo', 'Aten', 'Amor', 'Atira', 'Long Period', 'Short Period', 'Halley-type', 'Jupiter Family'][Math.floor(Math.random() * 8)],
           last_observed: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // Last year
         }
       })
@@ -173,7 +173,7 @@ function generateFallbackCometData(): CometObject[] {
       approach_date: new Date(Date.now() + (Math.random() - 0.5) * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       is_hazardous: Math.random() < 0.05, // Reduced to 5% for more realistic data
       magnitude: Math.random() * 12 + 12,
-      orbit_class: ['Long Period', 'Short Period', 'Halley-type', 'Jupiter Family'][Math.floor(Math.random() * 4)],
+      orbit_class: ['Apollo', 'Aten', 'Amor', 'Atira', 'Long Period', 'Short Period', 'Halley-type', 'Jupiter Family'][Math.floor(Math.random() * 8)],
       last_observed: new Date(Date.now() - Math.random() * 730 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
     })
   }

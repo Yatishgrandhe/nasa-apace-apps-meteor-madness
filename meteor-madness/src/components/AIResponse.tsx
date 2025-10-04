@@ -58,21 +58,68 @@ export default function AIResponse({
     }
   }
 
-  // Parse content for better formatting
+  // Parse content for better formatting with proper capitalization
   const formatContent = (text: string) => {
     if (!text) return ''
     
-    // Split into paragraphs
+    // Improve text capitalization and formatting
+    const improveText = (str: string) => {
+      return str
+        .replace(/\b\w/g, (char, index) => {
+          // Don't capitalize if it's after a period and space (already capitalized)
+          if (index > 0 && str[index - 1] === '.' && str[index - 2] === ' ') {
+            return char
+          }
+          // Capitalize first letter of sentences
+          if (index === 0 || (index > 1 && str[index - 2] === '.' && str[index - 1] === ' ')) {
+            return char.toUpperCase()
+          }
+          return char
+        })
+        .replace(/\b(apollo|aten|amor|atira|halley-type|jupiter family|long period|short period)\b/gi, (match) => {
+          const properNames: Record<string, string> = {
+            'apollo': 'Apollo',
+            'aten': 'Aten', 
+            'amor': 'Amor',
+            'atira': 'Atira',
+            'halley-type': 'Halley-type',
+            'jupiter family': 'Jupiter Family',
+            'long period': 'Long Period',
+            'short period': 'Short Period'
+          }
+          return properNames[match.toLowerCase()] || match
+        })
+        .replace(/\b(nasa|au|km\/s|asteroid|comet|earth|impact|risk|hazardous)\b/gi, (match) => {
+          const properTerms: Record<string, string> = {
+            'nasa': 'NASA',
+            'au': 'AU',
+            'km/s': 'km/s',
+            'asteroid': 'asteroid',
+            'comet': 'comet',
+            'earth': 'Earth',
+            'impact': 'impact',
+            'risk': 'risk',
+            'hazardous': 'hazardous'
+          }
+          return properTerms[match.toLowerCase()] || match
+        })
+    }
+    
+    // Split into paragraphs and clean up
     const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim())
     
     return paragraphs.map((paragraph, index) => {
       const trimmed = paragraph.trim()
+      const improvedText = improveText(trimmed)
       
       // Check if it's a list item
       if (trimmed.startsWith('-') || trimmed.startsWith('•') || trimmed.startsWith('*')) {
         const items = trimmed.split('\n')
           .filter(item => item.trim().match(/^[-•*]\s/))
-          .map(item => item.replace(/^[-•*]\s/, '').trim())
+          .map(item => {
+            const cleanItem = item.replace(/^[-•*]\s/, '').trim()
+            return improveText(cleanItem)
+          })
         
         return (
           <ul key={index} className="space-y-2 my-3">
@@ -90,7 +137,7 @@ export default function AIResponse({
       if (trimmed.match(/^[A-Z][A-Z\s]+:$/) || trimmed.endsWith(':')) {
         return (
           <h4 key={index} className="text-lg font-semibold text-white mt-4 mb-2 first:mt-0">
-            {trimmed.replace(':', '')}
+            {improvedText.replace(':', '')}
           </h4>
         )
       }
@@ -98,7 +145,7 @@ export default function AIResponse({
       // Regular paragraph
       return (
         <p key={index} className="text-gray-300 leading-relaxed mb-3 last:mb-0">
-          {trimmed}
+          {improvedText}
         </p>
       )
     })

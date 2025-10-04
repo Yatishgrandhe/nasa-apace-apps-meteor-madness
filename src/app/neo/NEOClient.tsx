@@ -207,7 +207,7 @@ export default function NEOClient({}: NEOClientProps) {
     <div className="min-h-screen nasa-bg">
       <Navigation />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
+      <div className="max-w-7xl 2xl:max-w-[140rem] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-8 sm:py-12 relative z-10">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -227,7 +227,7 @@ export default function NEOClient({}: NEOClientProps) {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.6 }}
-              className="text-5xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-300 bg-clip-text text-transparent mb-4"
+              className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-300 bg-clip-text text-transparent mb-4"
             >
               Near Earth Objects
             </motion.h1>
@@ -235,7 +235,7 @@ export default function NEOClient({}: NEOClientProps) {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6, duration: 0.6 }}
-              className="text-xl text-gray-300 max-w-2xl mx-auto mb-8"
+              className="text-base sm:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl text-gray-300 max-w-2xl xl:max-w-4xl 2xl:max-w-5xl mx-auto mb-6 sm:mb-8"
             >
               Monitor asteroids and comets approaching Earth with real-time NASA data and AI-powered impact analysis
             </motion.p>
@@ -263,7 +263,7 @@ export default function NEOClient({}: NEOClientProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12"
+          className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12"
         >
           {[
             { title: 'Total Objects', value: objects.length, icon: Globe, color: 'from-blue-500 to-blue-600' },
@@ -277,7 +277,7 @@ export default function NEOClient({}: NEOClientProps) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ duration: 0.6, delay: 0.4 + index * 0.1 }}
               whileHover={{ scale: 1.05, y: -5 }}
-              className="bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-2xl p-8 hover:shadow-2xl transition-all duration-300 shadow-lg glow-blue"
+              className="bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 hover:shadow-2xl transition-all duration-300 shadow-lg glow-blue"
             >
               <div className="flex items-center justify-between mb-6">
                 <motion.div 
@@ -288,8 +288,8 @@ export default function NEOClient({}: NEOClientProps) {
                   <stat.icon className="w-8 h-8 text-white" />
                 </motion.div>
               </div>
-              <h3 className="text-3xl font-bold text-white mb-2">{stat.value}</h3>
-              <p className="text-gray-300 font-medium">{stat.title}</p>
+              <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-2">{stat.value}</h3>
+              <p className="text-xs sm:text-sm lg:text-base text-gray-300 font-medium">{stat.title}</p>
             </motion.div>
           ))}
         </motion.div>
@@ -299,54 +299,57 @@ export default function NEOClient({}: NEOClientProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.5 }}
-          className="bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-2xl p-8 shadow-lg mb-8 glow-blue"
+          className="bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg mb-6 sm:mb-8 glow-blue"
         >
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex-1 min-w-64">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+            <div className="flex-1 min-w-0 sm:min-w-64">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                 <input
                   type="text"
                   placeholder="Search by name or orbit class..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-black/20 border border-cyan-500/30 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-gray-300 placeholder-gray-400"
+                  className="w-full pl-8 sm:pl-10 pr-4 py-2 sm:py-3 bg-black/20 border border-cyan-500/30 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-gray-300 placeholder-gray-400 text-sm sm:text-base"
                 />
               </div>
             </div>
             
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value as 'all' | 'asteroid' | 'comet')}
-              className="bg-black/20 border border-cyan-500/30 rounded-lg px-3 py-2 text-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-            >
-              <option value="all">All Types</option>
-              <option value="asteroid">Asteroids Only</option>
-              <option value="comet">Comets Only</option>
-            </select>
+            <div className="flex flex-wrap gap-2 sm:gap-4">
             
-            <select
-              value={filterHazardous}
-              onChange={(e) => setFilterHazardous(e.target.value as 'all' | 'hazardous' | 'safe')}
-              className="bg-black/20 border border-cyan-500/30 rounded-lg px-3 py-2 text-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-            >
-              <option value="all">All Objects</option>
-              <option value="hazardous">Hazardous Only</option>
-              <option value="safe">Safe Only</option>
-            </select>
-            
-            <select
-              value={filterOrbitClass}
-              onChange={(e) => setFilterOrbitClass(e.target.value)}
-              className="bg-black/20 border border-cyan-500/30 rounded-lg px-3 py-2 text-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-            >
-              <option value="all">All Orbit Classes</option>
-              {Object.values(ORBIT_CLASSES).map((orbitClass) => (
-                <option key={orbitClass.name} value={orbitClass.name}>
-                  {orbitClass.name}
-                </option>
-              ))}
-            </select>
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value as 'all' | 'asteroid' | 'comet')}
+                className="bg-black/20 border border-cyan-500/30 rounded-lg px-3 py-2 text-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-sm sm:text-base min-w-32"
+              >
+                <option value="all">All Types</option>
+                <option value="asteroid">Asteroids Only</option>
+                <option value="comet">Comets Only</option>
+              </select>
+              
+              <select
+                value={filterHazardous}
+                onChange={(e) => setFilterHazardous(e.target.value as 'all' | 'hazardous' | 'safe')}
+                className="bg-black/20 border border-cyan-500/30 rounded-lg px-3 py-2 text-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-sm sm:text-base min-w-32"
+              >
+                <option value="all">All Objects</option>
+                <option value="hazardous">Hazardous Only</option>
+                <option value="safe">Safe Only</option>
+              </select>
+              
+              <select
+                value={filterOrbitClass}
+                onChange={(e) => setFilterOrbitClass(e.target.value)}
+                className="bg-black/20 border border-cyan-500/30 rounded-lg px-3 py-2 text-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-sm sm:text-base min-w-36"
+              >
+                <option value="all">All Orbit Classes</option>
+                {Object.values(ORBIT_CLASSES).map((orbitClass) => (
+                  <option key={orbitClass.name} value={orbitClass.name}>
+                    {orbitClass.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </motion.div>
 
@@ -420,16 +423,16 @@ export default function NEOClient({}: NEOClientProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.7 }}
-          className="bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-2xl p-8 shadow-lg glow-blue"
+          className="bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg glow-blue"
         >
-          <div className="table-container">
-            <table>
+          <div className="table-container overflow-x-auto">
+            <table className="w-full min-w-[800px]">
               <thead>
                 <tr>
                   <th>
                     <button
                       onClick={() => handleSort('name')}
-                      className="flex items-center space-x-1 hover:text-cyan-400 text-gray-300"
+                      className="flex items-center space-x-1 hover:text-cyan-400 text-gray-300 text-xs sm:text-sm"
                     >
                       <span>Name</span>
                       <ArrowUpDown className="w-4 h-4" />
@@ -438,7 +441,7 @@ export default function NEOClient({}: NEOClientProps) {
                   <th>
                     <button
                       onClick={() => handleSort('type')}
-                      className="flex items-center space-x-1 hover:text-cyan-400 text-gray-300"
+                      className="flex items-center space-x-1 hover:text-cyan-400 text-gray-300 text-xs sm:text-sm"
                     >
                       <span>Type</span>
                       <ArrowUpDown className="w-4 h-4" />
@@ -447,7 +450,7 @@ export default function NEOClient({}: NEOClientProps) {
                   <th>
                     <button
                       onClick={() => handleSort('diameter')}
-                      className="flex items-center space-x-1 hover:text-cyan-400 text-gray-300"
+                      className="flex items-center space-x-1 hover:text-cyan-400 text-gray-300 text-xs sm:text-sm"
                     >
                       <span>Diameter</span>
                       <ArrowUpDown className="w-4 h-4" />
@@ -456,7 +459,7 @@ export default function NEOClient({}: NEOClientProps) {
                   <th>
                     <button
                       onClick={() => handleSort('velocity')}
-                      className="flex items-center space-x-1 hover:text-cyan-400 text-gray-300"
+                      className="flex items-center space-x-1 hover:text-cyan-400 text-gray-300 text-xs sm:text-sm"
                     >
                       <span>Velocity</span>
                       <ArrowUpDown className="w-4 h-4" />
@@ -465,7 +468,7 @@ export default function NEOClient({}: NEOClientProps) {
                   <th>
                     <button
                       onClick={() => handleSort('missDistance')}
-                      className="flex items-center space-x-1 hover:text-cyan-400 text-gray-300"
+                      className="flex items-center space-x-1 hover:text-cyan-400 text-gray-300 text-xs sm:text-sm"
                     >
                       <span>Miss Distance</span>
                       <ArrowUpDown className="w-4 h-4" />
@@ -474,7 +477,7 @@ export default function NEOClient({}: NEOClientProps) {
                   <th>
                     <button
                       onClick={() => handleSort('approachDate')}
-                      className="flex items-center space-x-1 hover:text-cyan-400 text-gray-300"
+                      className="flex items-center space-x-1 hover:text-cyan-400 text-gray-300 text-xs sm:text-sm"
                     >
                       <span>Approach Date</span>
                       <ArrowUpDown className="w-4 h-4" />
@@ -484,7 +487,7 @@ export default function NEOClient({}: NEOClientProps) {
                   <th>
                     <button
                       onClick={() => handleSort('orbitClass')}
-                      className="flex items-center space-x-1 hover:text-cyan-400 text-gray-300"
+                      className="flex items-center space-x-1 hover:text-cyan-400 text-gray-300 text-xs sm:text-sm"
                     >
                       <span>Orbit Class</span>
                       <ArrowUpDown className="w-4 h-4" />
