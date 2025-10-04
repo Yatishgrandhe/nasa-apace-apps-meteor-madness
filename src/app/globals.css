@@ -137,18 +137,28 @@ body {
   overflow-x: auto;
   border-radius: 0.5rem;
   border: 1px solid var(--border-color);
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
 
 .table-container table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 800px; /* Ensure minimum table width */
 }
 
 .table-container th,
 .table-container td {
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 0.75rem;
   text-align: left;
   border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+@media (min-width: 640px) {
+  .table-container th,
+  .table-container td {
+    padding: 0.75rem 1rem;
+  }
 }
 
 .table-container th {
@@ -242,4 +252,75 @@ body {
 * {
   /* Prevent browser extensions from interfering with React hydration */
   box-sizing: border-box;
+}
+
+/* Responsive utilities */
+@media (max-width: 640px) {
+  /* Mobile-specific adjustments */
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .text-responsive {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  
+  .card {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .btn-primary,
+  .btn-secondary {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  /* Ultrawide-specific adjustments */
+  .container {
+    max-width: 140rem;
+  }
+  
+  .text-responsive {
+    font-size: 1.125rem;
+    line-height: 1.7;
+  }
+  
+  .card {
+    padding: 2rem;
+  }
+  
+  .btn-primary,
+  .btn-secondary {
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+  }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+  .btn-primary,
+  .btn-secondary {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .table-container th button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* High DPI display optimizations */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .glow-blue,
+  .glow-purple,
+  .glow-orange,
+  .glow-green {
+    box-shadow: 0 0 40px rgba(0, 180, 216, 0.2);
+  }
 }
