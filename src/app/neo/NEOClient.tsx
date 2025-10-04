@@ -483,7 +483,7 @@ export default function NEOClient({}: NEOClientProps) {
                       <ArrowUpDown className="w-4 h-4" />
                     </button>
                   </th>
-                  <th className="text-gray-300">Status</th>
+                  <th className="text-gray-300 text-xs sm:text-sm">Status</th>
                   <th>
                     <button
                       onClick={() => handleSort('orbitClass')}
@@ -511,18 +511,26 @@ export default function NEOClient({}: NEOClientProps) {
                 ) : (
                   paginatedObjects.map((obj) => (
                     <tr key={obj.id} className="hover:bg-hover">
-                      <td className="font-medium text-gray-300">{obj.name}</td>
+                      <td className="font-medium text-gray-300 text-xs sm:text-sm">
+                        <div className="truncate max-w-[120px] sm:max-w-none" title={obj.name}>
+                          {obj.name}
+                        </div>
+                      </td>
                       <td>
-                        <span className={`badge ${obj.type === 'asteroid' ? 'badge-info' : 'badge-warning'}`}>
+                        <span className={`badge text-xs ${obj.type === 'asteroid' ? 'badge-info' : 'badge-warning'}`}>
                           {obj.type}
                         </span>
                       </td>
-                      <td className="text-gray-300">{formatDiameter(obj.diameter)}</td>
-                      <td className="text-gray-300">{formatVelocity(obj.velocity)}</td>
-                      <td className="font-mono text-gray-300">{formatDistance(obj.missDistance)}</td>
-                      <td className="text-gray-300">{obj.approachDate}</td>
+                      <td className="text-gray-300 text-xs sm:text-sm">{formatDiameter(obj.diameter)}</td>
+                      <td className="text-gray-300 text-xs sm:text-sm">{formatVelocity(obj.velocity)}</td>
+                      <td className="font-mono text-gray-300 text-xs sm:text-sm">{formatDistance(obj.missDistance)}</td>
+                      <td className="text-gray-300 text-xs sm:text-sm">
+                        <div className="truncate max-w-[80px] sm:max-w-none" title={obj.approachDate}>
+                          {obj.approachDate}
+                        </div>
+                      </td>
                       <td>
-                        <span className={`badge ${obj.isHazardous ? 'badge-danger' : 'badge-success'}`}>
+                        <span className={`badge text-xs ${obj.isHazardous ? 'badge-danger' : 'badge-success'}`}>
                           {obj.isHazardous ? 'Hazardous' : 'Safe'}
                         </span>
                       </td>
@@ -530,11 +538,11 @@ export default function NEOClient({}: NEOClientProps) {
                         {(() => {
                           const orbitInfo = getOrbitClassInfo(obj.orbitClass)
                           return (
-                            <div className="flex flex-col">
-                              <span className={`text-sm font-medium ${orbitInfo.color}`}>
+                            <div className="flex flex-col min-w-[100px]">
+                              <span className={`text-xs sm:text-sm font-medium ${orbitInfo.color}`}>
                                 {orbitInfo.name}
                               </span>
-                              <span className="text-xs text-gray-500 truncate max-w-32" title={orbitInfo.description}>
+                              <span className="text-xs text-gray-500 truncate max-w-32 hidden sm:block" title={orbitInfo.description}>
                                 {orbitInfo.description}
                               </span>
                             </div>

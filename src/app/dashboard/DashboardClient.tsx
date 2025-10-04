@@ -149,7 +149,7 @@ export default function DashboardClient({}: DashboardClientProps) {
     <div className="min-h-screen nasa-bg">
         <Navigation />
         
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
+        <div className="max-w-7xl 2xl:max-w-[140rem] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-8 sm:py-12 relative z-10">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -169,7 +169,7 @@ export default function DashboardClient({}: DashboardClientProps) {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.6 }}
-              className="text-5xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-300 bg-clip-text text-transparent mb-4"
+              className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-300 bg-clip-text text-transparent mb-4"
             >
               Dashboard
             </motion.h1>
@@ -177,7 +177,7 @@ export default function DashboardClient({}: DashboardClientProps) {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6, duration: 0.6 }}
-              className="text-xl text-gray-300 max-w-2xl mx-auto"
+              className="text-base sm:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl text-gray-300 max-w-2xl xl:max-w-4xl 2xl:max-w-5xl mx-auto"
             >
               Monitor Near-Earth Objects and space threats with real-time NASA data and AI analysis.
             </motion.p>
@@ -188,7 +188,7 @@ export default function DashboardClient({}: DashboardClientProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12"
+            className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12"
           >
             {stats.map((stat, index) => (
               <motion.div
@@ -197,7 +197,7 @@ export default function DashboardClient({}: DashboardClientProps) {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ duration: 0.6, delay: 0.4 + index * 0.1 }}
                 whileHover={{ scale: 1.05, y: -5 }}
-                className="bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-2xl p-8 hover:shadow-2xl transition-all duration-300 shadow-lg glow-blue"
+                className="bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 hover:shadow-2xl transition-all duration-300 shadow-lg glow-blue"
               >
                 <div className="flex items-center justify-between mb-6">
                   <motion.div 
@@ -209,8 +209,8 @@ export default function DashboardClient({}: DashboardClientProps) {
                   </motion.div>
                   <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">{stat.change}</span>
                 </div>
-                <h3 className="text-3xl font-bold text-white mb-2">{stat.value}</h3>
-                <p className="text-gray-300 font-medium">{stat.title}</p>
+                <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-2">{stat.value}</h3>
+                <p className="text-xs sm:text-sm lg:text-base text-gray-300 font-medium">{stat.title}</p>
               </motion.div>
             ))}
           </motion.div>
@@ -220,7 +220,7 @@ export default function DashboardClient({}: DashboardClientProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
-            className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+            className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8"
           >
             {/* Recent Activity */}
             <motion.div
@@ -228,14 +228,14 @@ export default function DashboardClient({}: DashboardClientProps) {
               animate={{ opacity: 1, x: 0, scale: 1 }}
               transition={{ duration: 0.6, delay: 0.6 }}
               whileHover={{ scale: 1.02 }}
-              className="bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 glow-blue"
+              className="bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 glow-blue"
             >
               <div className="flex items-center justify-between mb-8">
                 <motion.h2 
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.8 }}
-                  className="text-2xl font-bold text-white"
+                  className="text-xl sm:text-2xl lg:text-3xl font-bold text-white"
                 >
                   Recent Activity
                 </motion.h2>
@@ -309,7 +309,7 @@ export default function DashboardClient({}: DashboardClientProps) {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 1.6 }}
-                  className="text-2xl font-bold text-white"
+                  className="text-xl sm:text-2xl lg:text-3xl font-bold text-white"
                 >
                   AI Risk Assessment
                 </motion.h2>
