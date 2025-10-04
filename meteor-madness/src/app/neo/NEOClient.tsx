@@ -15,8 +15,10 @@ import {
   Zap
 } from 'lucide-react'
 import Navigation from '@/components/Navigation'
+import AIResponse from '@/components/AIResponse'
 import { fetchNEOData, fetchCometData, transformNEOData, transformCometData } from '@/lib/api/neo'
 import { analyzeImpactWithGemini } from '@/lib/api/gemini'
+import { getOrbitClassInfo, getOrbitClassColor, getOrbitClassBgColor, getOrbitClassDescription, ORBIT_CLASSES } from '@/lib/utils/orbitClasses'
 
 interface NEOObject {
   id: string
@@ -41,6 +43,7 @@ export default function NEOClient({}: NEOClientProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<'all' | 'asteroid' | 'comet'>('all')
   const [filterHazardous, setFilterHazardous] = useState<'all' | 'hazardous' | 'safe'>('all')
+  const [filterOrbitClass, setFilterOrbitClass] = useState<string>('all')
   const [sortField, setSortField] = useState<keyof NEOObject>('missDistance')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [currentPage, setCurrentPage] = useState(1)
@@ -134,8 +137,10 @@ export default function NEOClient({}: NEOClientProps) {
       const matchesHazardous = filterHazardous === 'all' || 
                               (filterHazardous === 'hazardous' && obj.isHazardous) ||
                               (filterHazardous === 'safe' && !obj.isHazardous)
+      const matchesOrbitClass = filterOrbitClass === 'all' || 
+                               getOrbitClassInfo(obj.orbitClass).name === filterOrbitClass
       
-      return matchesSearch && matchesType && matchesHazardous
+      return matchesSearch && matchesType && matchesHazardous && matchesOrbitClass
     })
 
     // Sort data
@@ -157,7 +162,7 @@ export default function NEOClient({}: NEOClientProps) {
     })
 
     return filtered
-  }, [objects, searchTerm, filterType, filterHazardous, sortField, sortDirection])
+  }, [objects, searchTerm, filterType, filterHazardous, filterOrbitClass, sortField, sortDirection])
 
   // Pagination
   const totalPages = Math.ceil(filteredAndSortedObjects.length / itemsPerPage)
@@ -340,6 +345,19 @@ export default function NEOClient({}: NEOClientProps) {
               <option value="hazardous">Hazardous Only</option>
               <option value="safe">Safe Only</option>
             </select>
+            
+            <select
+              value={filterOrbitClass}
+              onChange={(e) => setFilterOrbitClass(e.target.value)}
+              className="bg-black/20 border border-cyan-500/30 rounded-lg px-3 py-2 text-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+            >
+              <option value="all">All Orbit Classes</option>
+              {Object.values(ORBIT_CLASSES).map((orbitClass) => (
+                <option key={orbitClass.name} value={orbitClass.name}>
+                  {orbitClass.name}
+                </option>
+              ))}
+            </select>
           </div>
         </motion.div>
 
@@ -380,9 +398,12 @@ export default function NEOClient({}: NEOClientProps) {
               )}
             </div>
             {aiAnalysis ? (
-              <div className="bg-gray-800/50 rounded-lg p-4">
-                <pre className="text-sm text-gray-300 whitespace-pre-wrap">{aiAnalysis}</pre>
-              </div>
+              <AIResponse 
+                content={aiAnalysis} 
+                title="AI Impact Analysis"
+                type="analysis"
+                className="mb-4"
+              />
             ) : (
               <div>
                 {(() => {
@@ -485,7 +506,15 @@ export default function NEOClient({}: NEOClientProps) {
                     </button>
                   </th>
                   <th className="text-gray-300">Status</th>
-                  <th className="text-gray-300">Orbit Class</th>
+                  <th>
+                    <button
+                      onClick={() => handleSort('orbitClass')}
+                      className="flex items-center space-x-1 hover:text-cyan-400 text-gray-300"
+                    >
+                      <span>Orbit Class</span>
+                      <ArrowUpDown className="w-4 h-4" />
+                    </button>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -519,7 +548,21 @@ export default function NEOClient({}: NEOClientProps) {
                           {obj.isHazardous ? 'Hazardous' : 'Safe'}
                         </span>
                       </td>
-                      <td className="text-sm text-gray-400">{obj.orbitClass}</td>
+                      <td>
+                        {(() => {
+                          const orbitInfo = getOrbitClassInfo(obj.orbitClass)
+                          return (
+                            <div className="flex flex-col">
+                              <span className={`text-sm font-medium ${orbitInfo.color}`}>
+                                {orbitInfo.name}
+                              </span>
+                              <span className="text-xs text-gray-500 truncate max-w-32" title={orbitInfo.description}>
+                                {orbitInfo.description}
+                              </span>
+                            </div>
+                          )
+                        })()}
+                      </td>
                     </tr>
                   ))
                 )}

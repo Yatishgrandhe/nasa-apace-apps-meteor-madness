@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { Zap, Shield, Target, TrendingUp, Users, Globe, Activity } from 'lucide-react'
 import Navigation from '@/components/Navigation'
+import AIResponse from '@/components/AIResponse'
 import { fetchNEOData, fetchCometData, transformNEOData, transformCometData } from '@/lib/api/neo'
 import { analyzeImpactWithGemini } from '@/lib/api/gemini'
 import { useEffect, useState } from 'react'
@@ -355,15 +356,12 @@ export default function DashboardClient({}: DashboardClientProps) {
                     <p className="text-gray-400">Loading NASA data...</p>
                   </div>
                 ) : aiAnalysis ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-2 mb-4">
-                      <div className="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></div>
-                      <span className="text-purple-400 font-semibold">AI Analysis Active</span>
-                    </div>
-                    <div className="bg-gray-800/50 rounded-lg p-4">
-                      <pre className="text-sm text-gray-300 whitespace-pre-wrap">{aiAnalysis}</pre>
-                    </div>
-                  </div>
+                  <AIResponse 
+                    content={aiAnalysis} 
+                    title="Mission Control Insights"
+                    type="insight"
+                    className="mb-4"
+                  />
                 ) : (
                   <div className="space-y-4">
                     {(() => {
