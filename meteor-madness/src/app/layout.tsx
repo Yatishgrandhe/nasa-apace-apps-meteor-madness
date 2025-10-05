@@ -16,7 +16,7 @@ const jetBrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "Meteor Madness",
-  description: "Professional space mission tracking and Near Earth Objects monitoring system with AI analysis",
+  description: "Professional Near Earth Objects monitoring system with AI analysis and 3D solar system visualization",
 };
 
 export default function RootLayout({

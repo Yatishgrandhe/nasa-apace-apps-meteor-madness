@@ -41,7 +41,7 @@ export default function Home() {
             transition={{ delay: 0.6, duration: 0.6 }}
             className="text-lg sm:text-xl lg:text-2xl xl:text-3xl 2xl:text-4xl text-gray-300 max-w-4xl xl:max-w-6xl 2xl:max-w-7xl mx-auto mb-8"
           >
-            Track Near-Earth Objects and space missions with real-time NASA data and AI-powered analysis
+            Track Near-Earth Objects with real-time NASA data and AI-powered analysis
           </motion.p>
         </motion.div>
 
@@ -61,11 +61,11 @@ export default function Home() {
               href: '/neo'
             },
             {
-              title: 'Mission Control',
-              description: 'Track space missions and asteroid deflection projects',
-              icon: Target,
+              title: 'Solar System 3D',
+              description: 'Interactive 3D visualization of our solar system',
+              icon: Globe,
               color: 'from-orange-500 to-orange-600',
-              href: '/missions'
+              href: '/solar-system'
             },
             {
               title: 'Dashboard',
@@ -114,7 +114,7 @@ export default function Home() {
             {[
               { label: 'Objects Monitored', value: '28,000+', icon: Globe },
               { label: 'Hazardous Objects', value: '2,000+', icon: AlertTriangle },
-              { label: 'Active Missions', value: '15+', icon: Target },
+              { label: 'Solar Objects', value: '1000+', icon: Globe },
               { label: 'Data Sources', value: 'NASA JPL', icon: Search }
             ].map((stat, index) => (
               <motion.div
@@ -143,7 +143,7 @@ export default function Home() {
             Explore the Cosmos
           </h2>
           <p className="text-lg sm:text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
-            Join millions of space enthusiasts tracking asteroids, comets, and space missions in real-time
+            Join millions of space enthusiasts tracking asteroids and comets in real-time
           </p>
           <motion.a
             href="/neo"

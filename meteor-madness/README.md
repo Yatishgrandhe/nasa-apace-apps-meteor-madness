@@ -1,6 +1,6 @@
 # Meteor Madness - Node.js Optimized
 
-A professional space mission tracking and Near Earth Objects monitoring system with AI analysis, optimized for Node.js production environments.
+A professional Near Earth Objects monitoring system with AI analysis and 3D solar system visualization, optimized for Node.js production environments.
 
 ## 🚀 Node.js Optimization Features
 
@@ -172,7 +172,7 @@ pm2 start ecosystem.config.js --watch
 
 ### Application
 - `/dashboard`: Main dashboard
-- `/missions`: Mission tracking
+- `/solar-system`: 3D Solar System visualization
 - `/neo`: Near Earth Objects page
 
 ## 🤝 Contributing

@@ -149,8 +149,8 @@ export async function generateDashboardInsights(): Promise<string> {
 
   try {
     const prompt = `
-    Generate a brief, professional summary for a NASA mission control dashboard about current near-Earth object monitoring activities. 
-    Include insights about asteroid tracking, impact risk assessment, and space mission priorities.
+    Generate a brief, professional summary for a NASA monitoring dashboard about current near-Earth object monitoring activities. 
+    Include insights about asteroid tracking, impact risk assessment, and space monitoring priorities.
     Keep it concise (2-3 sentences) and authoritative.
     `;
 

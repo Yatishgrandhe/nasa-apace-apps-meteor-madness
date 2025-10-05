@@ -351,7 +351,7 @@ export default function DashboardClient({}: DashboardClientProps) {
                 ) : aiAnalysis ? (
                   <AIResponse 
                     content={aiAnalysis} 
-                    title="Mission Control Insights"
+                    title="Space Monitoring Insights"
                     type="insight"
                     className="mb-4"
                   />
