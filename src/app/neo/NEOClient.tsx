@@ -510,9 +510,9 @@ export default function NEOClient({}: NEOClientProps) {
                   </tr>
                 ) : (
                   paginatedObjects.map((obj) => (
-                    <tr key={obj.id} className="hover:bg-hover">
-                      <td className="font-medium text-gray-300 text-xs sm:text-sm">
-                        <div className="truncate max-w-[120px] sm:max-w-none" title={obj.name}>
+                    <tr key={obj.id} className="hover:bg-hover cursor-pointer" onClick={() => window.open(`/asteroid/${obj.id}`, '_blank')}>
+                      <td className="font-medium text-cyan-400 hover:text-cyan-300 transition-colors text-xs sm:text-sm">
+                        <div className="truncate max-w-[120px] sm:max-w-none" title={`Click to view details for ${obj.name}`}>
                           {obj.name}
                         </div>
                       </td>
