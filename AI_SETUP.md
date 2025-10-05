@@ -85,11 +85,12 @@ If no API key is provided or the API is unavailable, the system will:
 ## Technical Details
 
 ### API Integration
-- Uses Google's Gemini Pro model
+- Uses Google's Gemini 1.5 Pro model
 - Maximum 3072 tokens for single object analysis
 - Temperature set to 0.2 for consistent results
-- Automatic retry and error handling
+- Automatic retry and error handling with fallback to mock analysis
 - TomTom Maps API for interactive impact visualization
+- Graceful handling of API failures with detailed error logging
 
 ### Data Processing
 - Converts NASA API data to analysis format
@@ -116,6 +117,9 @@ If no API key is provided or the API is unavailable, the system will:
 ### Common Issues
 - **No analysis appears**: Check that your API key is correctly set in `.env.local`
 - **Analysis fails**: Verify your Gemini API key is valid and has sufficient quota
+- **404 API errors**: Gemini API will automatically fall back to mock analysis
+- **403 API errors**: API key may be invalid or lack permissions
+- **429 API errors**: Rate limit exceeded, will fall back to mock analysis
 - **Slow loading**: Analysis may take 5-10 seconds depending on object complexity
 - **Map not loading**: Verify your TomTom API key is correctly set
 - **Impact prediction shows "No Impact Predicted"**: Asteroid has very low impact probability (< 0.1%)

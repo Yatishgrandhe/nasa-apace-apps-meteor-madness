@@ -46,7 +46,7 @@ export async function analyzeImpactWithGemini(data: GeminiAnalysisRequest): Prom
     }
 
     // Real AI analysis API call
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -73,10 +73,25 @@ Provide a detailed risk assessment, recommendations, and identify the most criti
     })
 
     if (!response.ok) {
+      console.error(`Gemini API error: ${response.status} ${response.statusText}`)
+      if (response.status === 404) {
+        console.warn('Gemini model not found, falling back to mock analysis')
+      } else if (response.status === 403) {
+        console.warn('Gemini API key invalid or insufficient permissions, falling back to mock analysis')
+      } else if (response.status === 429) {
+        console.warn('Gemini API rate limit exceeded, falling back to mock analysis')
+      }
       throw new Error(`AI Analysis API error: ${response.status}`)
     }
 
     const result = await response.json()
+    
+    // Handle API response errors
+    if (!result.candidates || result.candidates.length === 0) {
+      console.warn('No candidates in Gemini response, falling back to mock analysis')
+      throw new Error('No analysis candidates available')
+    }
+    
     const analysis = result.candidates?.[0]?.content?.parts?.[0]?.text || 'Analysis unavailable'
 
     return {
@@ -104,7 +119,7 @@ export async function analyzeSingleObjectWithGemini(data: SingleObjectAnalysisRe
     }
 
     // Real AI analysis API call for single object
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -149,10 +164,25 @@ Format the response in clear sections with actionable insights.`
     })
 
     if (!response.ok) {
+      console.error(`Gemini API error: ${response.status} ${response.statusText}`)
+      if (response.status === 404) {
+        console.warn('Gemini model not found, falling back to mock analysis')
+      } else if (response.status === 403) {
+        console.warn('Gemini API key invalid or insufficient permissions, falling back to mock analysis')
+      } else if (response.status === 429) {
+        console.warn('Gemini API rate limit exceeded, falling back to mock analysis')
+      }
       throw new Error(`AI Analysis API error: ${response.status}`)
     }
 
     const result = await response.json()
+    
+    // Handle API response errors
+    if (!result.candidates || result.candidates.length === 0) {
+      console.warn('No candidates in Gemini response, falling back to mock analysis')
+      throw new Error('No analysis candidates available')
+    }
+    
     const analysis = result.candidates?.[0]?.content?.parts?.[0]?.text || 'Analysis unavailable'
 
     return {
