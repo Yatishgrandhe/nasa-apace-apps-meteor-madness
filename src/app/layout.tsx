@@ -15,7 +15,7 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Meteor Madness - Asteroid Impact Predictor",
+  title: "NEOWatch - Asteroid Impact Predictor",
   description: "Professional Near Earth Objects monitoring system with AI analysis and real-time threat assessment",
   icons: {
     icon: '/logo.png',
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     apple: '/logo.png',
   },
   openGraph: {
-    title: "Meteor Madness - Asteroid Impact Predictor",
+    title: "NEOWatch - Asteroid Impact Predictor",
     description: "Professional Near Earth Objects monitoring system with AI analysis and real-time threat assessment",
     images: ['/logo.png'],
   },

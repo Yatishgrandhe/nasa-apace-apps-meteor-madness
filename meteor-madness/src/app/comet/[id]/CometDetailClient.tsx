@@ -301,11 +301,21 @@ export default function CometDetailClient({ cometId }: CometDetailClientProps) {
               <div className="bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-lg p-6">
                 <h3 className="text-xl font-semibold text-cyan-400 mb-4 flex items-center space-x-2">
                   <Calendar className="w-5 h-5" />
-                  <span>Latest Close Approach</span>
+                  <span>
+                    {new Date(String(latestApproach.close_approach_date)) > new Date() 
+                      ? 'Predicted Latest Close Approach' 
+                      : 'Latest Close Approach'
+                    }
+                  </span>
                 </h3>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-300">Date:</span>
+                    <span className="text-gray-300">
+                      {new Date(String(latestApproach.close_approach_date)) > new Date() 
+                        ? 'Predicted Date:' 
+                        : 'Date:'
+                      }
+                    </span>
                     <span className="text-white font-medium">{String(latestApproach.close_approach_date)}</span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -375,6 +385,24 @@ export default function CometDetailClient({ cometId }: CometDetailClientProps) {
               </div>
             </div>
           </motion.div>
+        </div>
+      </div>
+
+      {/* NEOWatch Footer */}
+      <div className="mt-12 pt-8 border-t border-cyan-500/20">
+        <div className="flex items-center justify-center space-x-3 mb-4">
+          <div className="w-8 h-8 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full flex items-center justify-center">
+            <Zap className="w-4 h-4 text-white" />
+          </div>
+          <div className="text-center">
+            <h4 className="text-lg font-bold text-cyan-400">NEOWatch</h4>
+            <p className="text-sm text-gray-400">Professional Near Earth Objects Monitoring System</p>
+          </div>
+        </div>
+        <div className="text-center">
+          <p className="text-xs text-gray-400 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 inline-block">
+            Powered by NASA API
+          </p>
         </div>
       </div>
 

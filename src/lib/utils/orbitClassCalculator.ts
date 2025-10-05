@@ -241,7 +241,7 @@ export function determineOrbitClass(nasaData: any, jplData?: any): OrbitClassifi
       description: jplData.object?.class_name || jplData.orbit?.class_name || `JPL classified as ${jplClass}`,
       confidence: 95,
       method: 'api',
-      riskLevel: getRiskLevelFromClass(jplClass)
+      riskLevel: getRiskLevelFromClass(jplClass, nasaData.is_potentially_hazardous_asteroid)
     }
   }
 
@@ -261,7 +261,7 @@ export function determineOrbitClass(nasaData: any, jplData?: any): OrbitClassifi
       description: description,
       confidence: 95,
       method: 'api',
-      riskLevel: getRiskLevelFromClass(orbitClassString)
+      riskLevel: getRiskLevelFromClass(orbitClassString, nasaData.is_potentially_hazardous_asteroid)
     }
   }
 
@@ -275,11 +275,8 @@ export function determineOrbitClass(nasaData: any, jplData?: any): OrbitClassifi
   return getFallbackClassification(nasaData.is_potentially_hazardous_asteroid)
 }
 
-// Get risk level from orbit class
-function getRiskLevelFromClass(orbitClass: string): 'Low' | 'Medium' | 'High' {
-  const highRisk = ['Apollo', 'Aten', 'APO', 'ATE']
-  const mediumRisk = ['Amor', 'Atira', 'AMO', 'ATI', 'Potentially Hazardous']
-  
+// Get risk level from orbit class - properly reflects safety
+function getRiskLevelFromClass(orbitClass: string, isHazardous?: boolean): 'Low' | 'Medium' | 'High' {
   // Ensure orbitClass is a string
   if (!orbitClass || typeof orbitClass !== 'string') {
     return 'Low'
@@ -287,14 +284,24 @@ function getRiskLevelFromClass(orbitClass: string): 'Low' | 'Medium' | 'High' {
   
   const normalizedClass = orbitClass.toUpperCase()
   
-  if (highRisk.some(risk => normalizedClass.includes(risk))) {
+  // If explicitly marked as hazardous, it's high risk
+  if (isHazardous) {
     return 'High'
   }
   
-  if (mediumRisk.some(risk => normalizedClass.includes(risk))) {
+  // Apollo and Aten asteroids can cross Earth's orbit - higher risk
+  const highRisk = ['Apollo', 'Aten', 'APO', 'ATE']
+  if (highRisk.some(risk => normalizedClass.includes(risk))) {
     return 'Medium'
   }
   
+  // Amor and Atira asteroids are generally safer but still near-Earth
+  const mediumRisk = ['Amor', 'Atira', 'AMO', 'ATI']
+  if (mediumRisk.some(risk => normalizedClass.includes(risk))) {
+    return 'Low'
+  }
+  
+  // Main belt and other distant asteroids are safe
   return 'Low'
 }
 

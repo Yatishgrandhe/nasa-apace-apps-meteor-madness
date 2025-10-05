@@ -201,7 +201,12 @@ export default function AsteroidDetailClient({ asteroidId }: AsteroidDetailClien
     )
   }
 
+  // Calculate proper risk level based on safety status
   const orbitInfo = getOrbitClassInfo(asteroid.orbital_data?.orbit_class || 'Unknown')
+  const safeOrbitInfo = {
+    ...orbitInfo,
+    riskLevel: asteroid.is_potentially_hazardous ? 'High' : 'Low' as 'Low' | 'Medium' | 'High'
+  }
   const latestApproach = asteroid.close_approach_data?.[0]
   const diameterKm = asteroid.estimated_diameter?.kilometers
 
@@ -245,8 +250,8 @@ export default function AsteroidDetailClient({ asteroidId }: AsteroidDetailClien
                 </span>
                 <span className="text-gray-400">•</span>
                 <span className="text-sm text-gray-300">
-                  Risk Level: <span className={`font-semibold ${orbitInfo.riskLevel === 'High' ? 'text-red-400' : orbitInfo.riskLevel === 'Medium' ? 'text-yellow-400' : 'text-green-400'}`}>
-                    {orbitInfo.riskLevel}
+                  Risk Level: <span className={`font-semibold ${safeOrbitInfo.riskLevel === 'High' ? 'text-red-400' : safeOrbitInfo.riskLevel === 'Medium' ? 'text-yellow-400' : 'text-green-400'}`}>
+                    {safeOrbitInfo.riskLevel}
                   </span>
                 </span>
               </div>
@@ -401,14 +406,24 @@ export default function AsteroidDetailClient({ asteroidId }: AsteroidDetailClien
         <div className="bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 shadow-lg glow-blue">
               <h3 className="text-xl font-semibold text-cyan-400 mb-4 flex items-center space-x-2">
             <Clock className="w-5 h-5" />
-            <span>Latest Close Approach</span>
+            <span>
+              {new Date(latestApproach.close_approach_date) > new Date() 
+                ? 'Predicted Latest Close Approach' 
+                : 'Latest Close Approach'
+              }
+            </span>
               </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
               <div className="text-2xl font-bold text-white mb-1">
                 {new Date(latestApproach.close_approach_date).toLocaleDateString()}
               </div>
-              <div className="text-sm text-gray-400">Approach Date</div>
+              <div className="text-sm text-gray-400">
+                {new Date(latestApproach.close_approach_date) > new Date() 
+                  ? 'Predicted Approach Date' 
+                  : 'Approach Date'
+                }
+              </div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-white mb-1">
@@ -485,6 +500,19 @@ export default function AsteroidDetailClient({ asteroidId }: AsteroidDetailClien
           className="mt-8"
         />
       )}
+
+      {/* NEOWatch Footer */}
+      <div className="mt-12 pt-8 border-t border-cyan-500/20">
+        <div className="flex items-center justify-center space-x-3">
+          <div className="w-8 h-8 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full flex items-center justify-center">
+            <Zap className="w-4 h-4 text-white" />
+          </div>
+          <div className="text-center">
+            <h4 className="text-lg font-bold text-cyan-400">NEOWatch</h4>
+            <p className="text-sm text-gray-400">Professional Near Earth Objects Monitoring System</p>
+          </div>
+        </div>
+      </div>
 
     </StandardLayout>
   )
