@@ -44,50 +44,64 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
 
     const tomtomApiKey = process.env.NEXT_PUBLIC_TOMTOM_API_KEY
     
-    // Beautiful map with multiple tile sources for better visual appeal and reliability
+    // Realistic Earth map with satellite imagery and topographic features
     const mapStyle = {
       version: 8 as const,
       sources: {
-        'osm': {
+        'satellite': {
           type: 'raster' as const,
-          tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+          tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
           tileSize: 256,
-          attribution: '© OpenStreetMap contributors'
+          attribution: '© Esri, Maxar, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community'
         },
-        'carto-dark': {
+        'topographic': {
           type: 'raster' as const,
-          tiles: ['https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png'],
+          tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'],
           tileSize: 256,
-          attribution: '© CartoDB, © OpenStreetMap contributors'
+          attribution: '© Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community'
         },
-        'carto-light': {
+        'ocean-basemap': {
           type: 'raster' as const,
-          tiles: ['https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png'],
+          tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}'],
           tileSize: 256,
-          attribution: '© CartoDB, © OpenStreetMap contributors'
+          attribution: '© Esri, Garmin, GEBCO, NOAA NGDC, and other contributors'
+        },
+        'osm-terrain': {
+          type: 'raster' as const,
+          tiles: ['https://tile.opentopomap.org/{z}/{x}/{y}.png'],
+          tileSize: 256,
+          attribution: '© OpenTopoMap, © OpenStreetMap contributors'
         }
       },
       layers: [
         {
-          id: 'osm-base',
+          id: 'ocean-basemap-layer',
           type: 'raster' as const,
-          source: 'osm',
+          source: 'ocean-basemap',
+          paint: {
+            'raster-opacity': 0.7
+          }
+        },
+        {
+          id: 'satellite-layer',
+          type: 'raster' as const,
+          source: 'satellite',
           paint: {
             'raster-opacity': 0.8
           }
         },
         {
-          id: 'carto-dark-overlay',
+          id: 'topographic-overlay',
           type: 'raster' as const,
-          source: 'carto-dark',
+          source: 'topographic',
           paint: {
-            'raster-opacity': 0.4
+            'raster-opacity': 0.3
           }
         },
         {
-          id: 'carto-light-overlay',
+          id: 'terrain-overlay',
           type: 'raster' as const,
-          source: 'carto-light',
+          source: 'osm-terrain',
           paint: {
             'raster-opacity': 0.2
           }
@@ -96,43 +110,94 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
     }
 
     try {
-      // Initialize MapLibre GL JS with beautiful styling
+      // Initialize MapLibre GL JS with realistic Earth styling
       const map = new maplibregl.Map({
         container: mapRef.current,
         style: mapStyle,
         center: [impactPrediction.impactLocation.longitude, impactPrediction.impactLocation.latitude],
-        zoom: 8,
-        pitch: 45,
+        zoom: 10,
+        pitch: 60,
         bearing: 0,
-        maxZoom: 18,
-        minZoom: 2,
+        maxZoom: 20,
+        minZoom: 1,
         maxBounds: [[-180, -85], [180, 85]],
-        fadeDuration: 300
+        fadeDuration: 500,
+        renderWorldCopies: false,
+        localIdeographFontFamily: 'Arial, sans-serif'
       })
 
       map.on('load', () => {
         setMapLoaded(true)
 
-        // Add beautiful impact prediction marker with custom HTML
+        // Add realistic impact prediction marker with enhanced visuals
         const impactMarker = document.createElement('div')
         impactMarker.className = 'impact-marker'
         impactMarker.style.cssText = `
-          width: 40px;
-          height: 40px;
-          background: radial-gradient(circle, #ff4444 0%, #ff0000 70%, #cc0000 100%);
-          border: 3px solid #ffffff;
+          width: 50px;
+          height: 50px;
+          background: radial-gradient(circle, #ff6b35 0%, #f7931e 30%, #ff0000 70%, #8b0000 100%);
+          border: 4px solid #ffffff;
           border-radius: 50%;
-          box-shadow: 0 0 20px #ff4444, 0 0 40px #ff4444, inset 0 0 10px rgba(255,255,255,0.3);
-          animation: pulse-impact 2s ease-in-out infinite;
+          box-shadow: 
+            0 0 25px #ff6b35,
+            0 0 50px #ff4444,
+            0 0 75px #ff0000,
+            inset 0 0 15px rgba(255,255,255,0.4),
+            inset 0 0 30px rgba(255,255,255,0.1);
+          animation: realistic-impact-pulse 3s ease-in-out infinite;
           position: relative;
+          cursor: pointer;
         `
         
-        // Add pulsing animation
+        // Add realistic pulsing animation with multiple effects
         const style = document.createElement('style')
         style.textContent = `
-          @keyframes pulse-impact {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 20px #ff4444, 0 0 40px #ff4444, inset 0 0 10px rgba(255,255,255,0.3); }
-            50% { transform: scale(1.2); box-shadow: 0 0 30px #ff4444, 0 0 60px #ff4444, inset 0 0 15px rgba(255,255,255,0.5); }
+          @keyframes realistic-impact-pulse {
+            0% { 
+              transform: scale(1) rotate(0deg); 
+              box-shadow: 
+                0 0 25px #ff6b35,
+                0 0 50px #ff4444,
+                0 0 75px #ff0000,
+                inset 0 0 15px rgba(255,255,255,0.4),
+                inset 0 0 30px rgba(255,255,255,0.1);
+            }
+            25% { 
+              transform: scale(1.1) rotate(90deg); 
+              box-shadow: 
+                0 0 35px #ff6b35,
+                0 0 70px #ff4444,
+                0 0 105px #ff0000,
+                inset 0 0 20px rgba(255,255,255,0.5),
+                inset 0 0 40px rgba(255,255,255,0.2);
+            }
+            50% { 
+              transform: scale(1.3) rotate(180deg); 
+              box-shadow: 
+                0 0 45px #ff6b35,
+                0 0 90px #ff4444,
+                0 0 135px #ff0000,
+                inset 0 0 25px rgba(255,255,255,0.6),
+                inset 0 0 50px rgba(255,255,255,0.3);
+            }
+            75% { 
+              transform: scale(1.1) rotate(270deg); 
+              box-shadow: 
+                0 0 35px #ff6b35,
+                0 0 70px #ff4444,
+                0 0 105px #ff0000,
+                inset 0 0 20px rgba(255,255,255,0.5),
+                inset 0 0 40px rgba(255,255,255,0.2);
+            }
+            100% { 
+              transform: scale(1) rotate(360deg); 
+              box-shadow: 
+                0 0 25px #ff6b35,
+                0 0 50px #ff4444,
+                0 0 75px #ff0000,
+                inset 0 0 15px rgba(255,255,255,0.4),
+                inset 0 0 30px rgba(255,255,255,0.1);
+            }
           }
         `
         document.head.appendChild(style)
@@ -171,7 +236,7 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
           }]
         }
 
-        // Add impact zone circle
+        // Add realistic impact zone with enhanced visuals
         map.addSource('impact-zone', {
           type: 'geojson',
           data: impactZoneGeoJSON
@@ -190,27 +255,39 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
               'interpolate',
               ['linear'],
               ['get', 'radius'],
-              0, '#ff4444',
-              10000, '#ff6666',
+              0, '#ff6b35',
+              5000, '#f7931e',
+              15000, '#ff4444',
+              30000, '#ff6666',
               50000, '#ff8888'
             ],
             'circle-opacity': [
               'interpolate',
               ['linear'],
               ['zoom'],
-              8, 0.2,
-              12, 0.3,
-              16, 0.4
+              6, 0.15,
+              10, 0.25,
+              14, 0.35,
+              18, 0.45
             ],
-            'circle-stroke-color': '#ff4444',
-            'circle-stroke-opacity': 0.8,
+            'circle-stroke-color': '#ff6b35',
+            'circle-stroke-opacity': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              6, 0.6,
+              10, 0.7,
+              14, 0.8,
+              18, 0.9
+            ],
             'circle-stroke-width': [
               'interpolate',
               ['linear'],
               ['zoom'],
-              8, 1,
-              12, 2,
-              16, 3
+              6, 1,
+              10, 2,
+              14, 3,
+              18, 4
             ]
           }
         })
@@ -225,25 +302,37 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
               property: 'radius',
               type: 'identity'
             },
-            'circle-color': '#ff4444',
+            'circle-color': '#ff6b35',
             'circle-opacity': [
               'interpolate',
               ['linear'],
               ['get', 'radius'],
-              0, 0.4,
-              25000, 0.2,
-              50000, 0
+              0, 0.3,
+              10000, 0.2,
+              25000, 0.15,
+              40000, 0.1,
+              50000, 0.05
             ],
-            'circle-stroke-color': '#ff4444',
+            'circle-stroke-color': '#f7931e',
             'circle-stroke-opacity': [
               'interpolate',
               ['linear'],
               ['get', 'radius'],
               0, 0.6,
+              10000, 0.4,
               25000, 0.3,
-              50000, 0
+              40000, 0.2,
+              50000, 0.1
             ],
-            'circle-stroke-width': 1
+            'circle-stroke-width': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              6, 1,
+              10, 2,
+              14, 3,
+              18, 4
+            ]
           }
         })
 
@@ -266,27 +355,39 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
               'interpolate',
               ['linear'],
               ['get', 'radius'],
-              0, '#ff0000',
-              100, '#ff4444',
-              500, '#ff6666'
+              0, '#8b0000',
+              50, '#ff0000',
+              200, '#ff4444',
+              500, '#ff6666',
+              1000, '#ff8888'
             ],
             'circle-opacity': [
               'interpolate',
               ['linear'],
               ['zoom'],
-              8, 0.4,
-              12, 0.6,
-              16, 0.8
+              6, 0.3,
+              10, 0.5,
+              14, 0.7,
+              18, 0.9
             ],
-            'circle-stroke-color': '#ff0000',
-            'circle-stroke-opacity': 1,
+            'circle-stroke-color': '#8b0000',
+            'circle-stroke-opacity': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              6, 0.8,
+              10, 0.9,
+              14, 1,
+              18, 1
+            ],
             'circle-stroke-width': [
               'interpolate',
               ['linear'],
               ['zoom'],
-              8, 2,
-              12, 3,
-              16, 4
+              6, 2,
+              10, 3,
+              14, 4,
+              18, 5
             ]
           }
         })
@@ -501,41 +602,65 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
                     </button>
                     </div>
 
-                    {/* Map Style Toggle - Only show if layers are available */}
-                    {mapInstance && mapInstance.getLayer('carto-light-overlay') && mapInstance.getLayer('carto-dark-overlay') && (
+                    {/* Map Style Toggle - Enhanced for realistic Earth views */}
+                    {mapInstance && mapInstance.getLayer('satellite-layer') && mapInstance.getLayer('topographic-overlay') && (
                       <div className="bg-gradient-to-br from-black/90 to-gray-900/90 backdrop-blur-md border border-cyan-500/40 rounded-xl p-2">
                         <div className="text-xs text-cyan-400 text-center mb-2 font-medium">Map Style</div>
                         <div className="flex space-x-1">
                           <button
                             onClick={() => {
                               const map = mapInstance
-                              if (map && map.getLayer('carto-light-overlay') && map.getLayer('carto-dark-overlay')) {
+                              if (map && map.getLayer('satellite-layer') && map.getLayer('topographic-overlay')) {
                                 try {
-                                  map.setPaintProperty('carto-light-overlay', 'raster-opacity', 0.1)
-                                  map.setPaintProperty('carto-dark-overlay', 'raster-opacity', 0.8)
+                                  map.setPaintProperty('satellite-layer', 'raster-opacity', 0.9)
+                                  map.setPaintProperty('topographic-overlay', 'raster-opacity', 0.1)
+                                  map.setPaintProperty('terrain-overlay', 'raster-opacity', 0.1)
                                 } catch (error) {
-                                  console.warn('Failed to set dark theme:', error)
+                                  console.warn('Failed to set satellite view:', error)
                                 }
                               }
                             }}
-                            className="w-8 h-8 bg-gray-800 hover:bg-gray-700 rounded-lg border border-gray-600 hover:border-gray-500 transition-colors"
-                            title="Dark Theme"
-                          />
+                            className="w-8 h-8 bg-gray-800 hover:bg-gray-700 rounded-lg border border-gray-600 hover:border-gray-500 transition-colors flex items-center justify-center"
+                            title="Satellite View"
+                          >
+                            <div className="w-3 h-3 bg-green-600 rounded-full"></div>
+                          </button>
                           <button
                             onClick={() => {
                               const map = mapInstance
-                              if (map && map.getLayer('carto-light-overlay') && map.getLayer('carto-dark-overlay')) {
+                              if (map && map.getLayer('satellite-layer') && map.getLayer('topographic-overlay')) {
                                 try {
-                                  map.setPaintProperty('carto-light-overlay', 'raster-opacity', 0.8)
-                                  map.setPaintProperty('carto-dark-overlay', 'raster-opacity', 0.2)
+                                  map.setPaintProperty('satellite-layer', 'raster-opacity', 0.3)
+                                  map.setPaintProperty('topographic-overlay', 'raster-opacity', 0.8)
+                                  map.setPaintProperty('terrain-overlay', 'raster-opacity', 0.5)
                                 } catch (error) {
-                                  console.warn('Failed to set light theme:', error)
+                                  console.warn('Failed to set topographic view:', error)
                                 }
                               }
                             }}
-                            className="w-8 h-8 bg-white hover:bg-gray-100 rounded-lg border border-gray-300 hover:border-gray-400 transition-colors"
-                            title="Light Theme"
-                          />
+                            className="w-8 h-8 bg-white hover:bg-gray-100 rounded-lg border border-gray-300 hover:border-gray-400 transition-colors flex items-center justify-center"
+                            title="Topographic View"
+                          >
+                            <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
+                          </button>
+                          <button
+                            onClick={() => {
+                              const map = mapInstance
+                              if (map && map.getLayer('satellite-layer') && map.getLayer('topographic-overlay')) {
+                                try {
+                                  map.setPaintProperty('satellite-layer', 'raster-opacity', 0.6)
+                                  map.setPaintProperty('topographic-overlay', 'raster-opacity', 0.4)
+                                  map.setPaintProperty('terrain-overlay', 'raster-opacity', 0.3)
+                                } catch (error) {
+                                  console.warn('Failed to set hybrid view:', error)
+                                }
+                              }
+                            }}
+                            className="w-8 h-8 bg-purple-600 hover:bg-purple-700 rounded-lg border border-purple-500 hover:border-purple-400 transition-colors flex items-center justify-center"
+                            title="Hybrid View"
+                          >
+                            <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                          </button>
                         </div>
                       </div>
                     )}
