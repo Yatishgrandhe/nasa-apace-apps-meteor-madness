@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import CometDetailClient from './CometDetailClient'
-import Navigation from '@/components/Navigation'
 
 interface CometPageProps {
   params: Promise<{
@@ -18,10 +17,5 @@ export async function generateMetadata({ params }: CometPageProps): Promise<Meta
 
 export default async function CometPage({ params }: CometPageProps) {
   const { id } = await params
-  return (
-    <>
-      <Navigation />
-      <CometDetailClient cometId={id} />
-    </>
-  )
+  return <CometDetailClient cometId={id} />
 }

@@ -2,7 +2,6 @@
 
 import { motion } from 'framer-motion'
 import { Zap, Shield, Target, TrendingUp, Globe, Activity } from 'lucide-react'
-import Navigation from '@/components/Navigation'
 import AIResponse from '@/components/AIResponse'
 import { fetchNEOData, fetchCometData, transformNEOData, transformCometData, type NEOObject, type CometObject } from '@/lib/api/neo'
 import { analyzeImpactWithGemini } from '@/lib/api/gemini'
@@ -147,7 +146,6 @@ export default function DashboardClient({}: DashboardClientProps) {
 
   return (
     <div className="min-h-screen nasa-bg">
-        <Navigation />
         
         <div className="max-w-7xl 2xl:max-w-[140rem] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-8 sm:py-12 relative z-10">
           {/* Header */}
