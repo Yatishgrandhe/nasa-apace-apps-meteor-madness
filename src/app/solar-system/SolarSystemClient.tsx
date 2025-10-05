@@ -100,7 +100,7 @@ export default function SolarSystemClient({}: SolarSystemClientProps) {
       </div>
 
       {/* Main Content - Full Screen */}
-      <div className="relative z-10 flex-1 flex flex-col">
+      <div className="relative z-10 flex-1 flex flex-col px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -118,9 +118,9 @@ export default function SolarSystemClient({}: SolarSystemClientProps) {
           )}
 
           {/* NASA Eyes on Solar System Embed - Full Screen */}
-          <div className={`flex-1 transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}>
+          <div className={`flex-1 transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'} p-2 sm:p-4`}>
             <iframe
-              src="https://eyes.nasa.gov/apps/solar-system/"
+              src="https://eyes.nasa.gov/apps/solar-system/#/home?rate=0&time=2049-12-30T23%3A59%3A59.999+00%3A00&featured=false&shareButton=false&surfaceMapTiling=true&hd=true&spout=true"
               width="100%"
               height="100%"
               frameBorder="0"
@@ -130,7 +130,7 @@ export default function SolarSystemClient({}: SolarSystemClientProps) {
               onLoad={() => setIsLoading(false)}
               style={{
                 minHeight: '60vh', // Minimum height for mobile
-                height: 'calc(100vh - 120px)', // Full height minus header space
+                height: 'calc(100vh - 160px)', // Full height minus header, padding, and margins
               }}
             />
           </div>
