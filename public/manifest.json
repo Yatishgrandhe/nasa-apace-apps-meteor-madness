@@ -1,0 +1,21 @@
+{
+  "name": "Meteor Madness - Asteroid Impact Predictor",
+  "short_name": "Meteor Madness",
+  "description": "Professional Near Earth Objects monitoring system with AI analysis and real-time threat assessment",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#1a1a2e",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

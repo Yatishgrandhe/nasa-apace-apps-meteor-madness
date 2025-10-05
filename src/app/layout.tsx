@@ -15,8 +15,18 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NEOWatch",
+  title: "Meteor Madness - Asteroid Impact Predictor",
   description: "Professional Near Earth Objects monitoring system with AI analysis and real-time threat assessment",
+  icons: {
+    icon: '/logo.png',
+    shortcut: '/logo.png',
+    apple: '/logo.png',
+  },
+  openGraph: {
+    title: "Meteor Madness - Asteroid Impact Predictor",
+    description: "Professional Near Earth Objects monitoring system with AI analysis and real-time threat assessment",
+    images: ['/logo.png'],
+  },
 };
 
 export default function RootLayout({
@@ -27,6 +37,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning={true}>
       <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#1a1a2e" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
