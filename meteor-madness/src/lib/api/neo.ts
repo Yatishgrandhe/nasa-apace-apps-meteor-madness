@@ -120,21 +120,18 @@ export async function fetchCometData(): Promise<CometObject[]> {
     // Check if we have valid comet data
     if (data.data && Array.isArray(data.data) && data.data.length > 0) {
       return data.data.map((comet: any, index: number) => {
-        // JPL API returns arrays with specific field positions
-        const designation = comet[0] || `C/${new Date().getFullYear()}${String(index + 1).padStart(2, '0')}`
-        const name = comet[1] || comet[0] || `Comet ${index + 1}`
-        
+        // Map mock comet data structure
         return {
-          designation,
-          name,
-          diameter: Math.random() * 8 + 2, // Realistic comet diameter (2-10 km)
+          designation: comet.id || `C/${new Date().getFullYear()}${String(index + 1).padStart(2, '0')}`,
+          name: comet.name || comet.fullname || `Comet ${index + 1}`,
+          diameter: parseFloat(comet.diameter) || Math.random() * 8 + 2,
           velocity: Math.random() * 40 + 20, // Realistic comet velocity (20-60 km/s)
           miss_distance: Math.random() * 3 + 0.5, // Miss distance (0.5-3.5 AU)
           approach_date: new Date(Date.now() + Math.random() * 730 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Next 2 years
-          is_hazardous: Math.random() < 0.15, // 15% chance of being hazardous
-          magnitude: Math.random() * 12 + 12, // Magnitude (12-24)
-          orbit_class: ['Apollo', 'Aten', 'Amor', 'Atira', 'Long Period', 'Short Period', 'Halley-type', 'Jupiter Family'][Math.floor(Math.random() * 8)],
-          last_observed: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // Last year
+          is_hazardous: comet.pha === 'Y' || Math.random() < 0.15, // 15% chance of being hazardous
+          magnitude: parseFloat(comet.h) || Math.random() * 12 + 12,
+          orbit_class: comet.orbit_class || ['Long Period', 'Short Period', 'Halley-type', 'Jupiter Family'][Math.floor(Math.random() * 4)],
+          last_observed: comet.last_obs || new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
         }
       })
     }
@@ -211,8 +208,8 @@ export function transformNEOData(apiObjects: NEOObject[]) {
 
 export function transformCometData(apiObjects: CometObject[]) {
   return apiObjects.map(obj => ({
-    id: `C${obj.designation || 'unknown'}`,
-    name: obj.name || obj.designation || 'Unknown Comet',
+    id: obj.designation || 'unknown',
+    name: obj.name || 'Unknown Comet',
     type: 'comet' as const,
     diameter: obj.diameter || 2.0,
     velocity: obj.velocity || 15.0,
@@ -220,7 +217,7 @@ export function transformCometData(apiObjects: CometObject[]) {
     approachDate: obj.approach_date || new Date().toISOString().split('T')[0],
     isHazardous: obj.is_hazardous || false,
     magnitude: obj.magnitude || 18.0,
-      orbitClass: obj.orbit_class || ['Long Period', 'Short Period', 'Halley-type', 'Jupiter Family'][Math.floor(Math.random() * 4)],
+    orbitClass: obj.orbit_class || 'Unknown',
     lastObserved: obj.last_observed || new Date().toISOString().split('T')[0],
     nextApproach: obj.approach_date || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   }))

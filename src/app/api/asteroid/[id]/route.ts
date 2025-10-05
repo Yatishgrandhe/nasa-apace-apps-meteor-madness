@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const asteroidId = params.id
+  const { id: asteroidId } = await params
 
   try {
     const apiKey = process.env.NEXT_PUBLIC_NASA_API_KEY

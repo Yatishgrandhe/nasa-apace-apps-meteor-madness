@@ -171,13 +171,26 @@ export default function AsteroidDetailClient({ asteroidId }: AsteroidDetailClien
               </h3>
               <div className="h-96 bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg overflow-hidden">
                 <iframe
-                  src={`https://eyes.nasa.gov/apps/solar-system/#/asteroid/${asteroid.id}?rate=0&shareButton=false&surfaceMapTiling=true&hd=true&spout=true`}
+                  src={`https://eyes.nasa.gov/apps/solar-system/#/asteroid/${asteroid.id}?rate=0&shareButton=false&surfaceMapTiling=true&hd=true&spout=false`}
                   width="100%"
                   height="100%"
                   frameBorder="0"
                   allowFullScreen
                   title={`NASA Eyes 3D Visualization - ${asteroid.name}`}
                   className="w-full h-full"
+                  onError={(e) => {
+                    console.warn('NASA Eyes iframe failed to load, showing fallback');
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.parentElement!.innerHTML = `
+                      <div class="flex items-center justify-center h-full text-gray-400">
+                        <div class="text-center">
+                          <div class="text-4xl mb-2">🌌</div>
+                          <p>3D visualization temporarily unavailable</p>
+                          <p class="text-sm mt-1">Visit <a href="https://eyes.nasa.gov/apps/solar-system/" target="_blank" rel="noopener noreferrer" class="text-cyan-400 hover:underline">NASA Eyes on Solar System</a> directly</p>
+                        </div>
+                      </div>
+                    `;
+                  }}
                 />
               </div>
               <div className="mt-4 text-center">
@@ -265,6 +278,30 @@ export default function AsteroidDetailClient({ asteroidId }: AsteroidDetailClien
                       <div className="flex justify-between">
                         <span className="text-gray-300">Orbital Period:</span>
                         <span className="text-white font-medium">{String(asteroid.orbital_data.period_yr || 'N/A')} years</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-300">Eccentricity:</span>
+                        <span className="text-white font-medium">{String(asteroid.orbital_data.eccentricity || 'N/A')}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-300">Semi-Major Axis:</span>
+                        <span className="text-white font-medium">{String(asteroid.orbital_data.semi_major_axis || 'N/A')} AU</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-300">Argument of Perihelion:</span>
+                        <span className="text-white font-medium">{String(asteroid.orbital_data.argument_of_perihelion || 'N/A')}°</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-300">Longitude of Ascending Node:</span>
+                        <span className="text-white font-medium">{String(asteroid.orbital_data.longitude_of_ascending_node || 'N/A')}°</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-300">Mean Anomaly:</span>
+                        <span className="text-white font-medium">{String(asteroid.orbital_data.mean_anomaly || 'N/A')}°</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-300">Mean Motion:</span>
+                        <span className="text-white font-medium">{String(asteroid.orbital_data.mean_motion || 'N/A')}°/day</span>
                       </div>
                     </div>
                   </div>

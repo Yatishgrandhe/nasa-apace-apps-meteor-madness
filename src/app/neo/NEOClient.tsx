@@ -14,6 +14,7 @@ import {
   Zap
 } from 'lucide-react'
 import AIResponse from '@/components/AIResponse'
+import StandardLayout from '@/components/StandardLayout'
 import { fetchNEOData, fetchCometData, transformNEOData, transformCometData } from '@/lib/api/neo'
 import { analyzeImpactWithGemini } from '@/lib/api/gemini'
 import { getOrbitClassInfo, getOrbitClassColor, getOrbitClassBgColor, getOrbitClassDescription, ORBIT_CLASSES } from '@/lib/utils/orbitClasses'
@@ -203,58 +204,23 @@ export default function NEOClient({}: NEOClientProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-indigo-900 relative overflow-hidden">
-      
-      <div className="max-w-7xl 2xl:max-w-[140rem] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-8 sm:py-12 relative z-10">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="mb-12 text-center"
+    <StandardLayout 
+      title="Space Objects Monitor" 
+      subtitle="Real-time tracking of asteroids and comets with orbital classification and impact analysis"
+    >
+      {/* AI Analysis Button */}
+      <div className="flex justify-center mb-8">
+        <motion.button
+          onClick={runAiAnalysis}
+          disabled={analyzing}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-3 disabled:opacity-50 glow-purple"
         >
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full mb-6 shadow-lg glow-blue"
-            >
-              <Globe className="w-10 h-10 text-white" />
-            </motion.div>
-            <motion.h1
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.6 }}
-              className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-300 bg-clip-text text-transparent mb-4"
-            >
-              Space Objects Monitor
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, duration: 0.6 }}
-              className="text-base sm:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl text-gray-300 max-w-2xl xl:max-w-4xl 2xl:max-w-5xl mx-auto mb-6 sm:mb-8"
-            >
-              Monitor Near-Earth Objects and comets with real-time NASA data and AI-powered threat analysis
-            </motion.p>
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 0.6 }}
-            className="flex justify-center"
-          >
-            <motion.button
-              onClick={runAiAnalysis}
-              disabled={analyzing}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-3 disabled:opacity-50 glow-purple"
-            >
-              <Zap className="w-6 h-6" />
-              <span>{analyzing ? 'Analyzing...' : 'AI Impact Analysis'}</span>
-            </motion.button>
-          </motion.div>
-        </motion.div>
+          <Zap className="w-6 h-6" />
+          <span>{analyzing ? 'Analyzing...' : 'AI Impact Analysis'}</span>
+        </motion.button>
+      </div>
 
         {/* Stats Cards */}
         <motion.div
@@ -318,7 +284,14 @@ export default function NEOClient({}: NEOClientProps) {
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value as 'all' | 'asteroid' | 'comet')}
-                className="bg-black/20 border border-cyan-500/30 rounded-lg px-3 py-2 text-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-sm sm:text-base min-w-32"
+                className="bg-black/20 border border-cyan-500/30 rounded-lg px-3 py-2 text-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-sm sm:text-base min-w-32 appearance-none cursor-pointer hover:bg-black/30 transition-colors duration-200"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23667eea' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E")`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right 0.5rem center',
+                  backgroundSize: '1rem',
+                  paddingRight: '2rem'
+                }}
               >
                 <option value="all">All Types</option>
                 <option value="asteroid">Asteroids Only</option>
@@ -328,7 +301,14 @@ export default function NEOClient({}: NEOClientProps) {
               <select
                 value={filterHazardous}
                 onChange={(e) => setFilterHazardous(e.target.value as 'all' | 'hazardous' | 'safe')}
-                className="bg-black/20 border border-cyan-500/30 rounded-lg px-3 py-2 text-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-sm sm:text-base min-w-32"
+                className="bg-black/20 border border-cyan-500/30 rounded-lg px-3 py-2 text-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-sm sm:text-base min-w-32 appearance-none cursor-pointer hover:bg-black/30 transition-colors duration-200"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23667eea' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E")`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right 0.5rem center',
+                  backgroundSize: '1rem',
+                  paddingRight: '2rem'
+                }}
               >
                 <option value="all">All Objects</option>
                 <option value="hazardous">Hazardous Only</option>
@@ -338,7 +318,14 @@ export default function NEOClient({}: NEOClientProps) {
               <select
                 value={filterOrbitClass}
                 onChange={(e) => setFilterOrbitClass(e.target.value)}
-                className="bg-black/20 border border-cyan-500/30 rounded-lg px-3 py-2 text-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-sm sm:text-base min-w-36"
+                className="bg-black/20 border border-cyan-500/30 rounded-lg px-3 py-2 text-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-sm sm:text-base min-w-36 appearance-none cursor-pointer hover:bg-black/30 transition-colors duration-200"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23667eea' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E")`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right 0.5rem center',
+                  backgroundSize: '1rem',
+                  paddingRight: '2rem'
+                }}
               >
                 <option value="all">All Orbit Classes</option>
                 {Object.values(ORBIT_CLASSES).map((orbitClass) => (
@@ -508,7 +495,7 @@ export default function NEOClient({}: NEOClientProps) {
                   </tr>
                 ) : (
                   paginatedObjects.map((obj) => (
-                    <tr key={obj.id} className="hover:bg-hover cursor-pointer" onClick={() => window.location.href = `/asteroid/${obj.id}`}>
+                    <tr key={obj.id} className="hover:bg-hover cursor-pointer" onClick={() => window.location.href = obj.type === 'comet' ? `/comet/${obj.id}` : `/asteroid/${obj.id}`}>
                       <td className="font-medium text-cyan-400 hover:text-cyan-300 transition-colors text-xs sm:text-sm">
                         <div className="truncate max-w-[120px] sm:max-w-none" title={`Click to view details for ${obj.name}`}>
                           {obj.name}
@@ -605,7 +592,6 @@ export default function NEOClient({}: NEOClientProps) {
             </div>
           )}
         </motion.div>
-      </div>
-    </div>
+    </StandardLayout>
   )
 }

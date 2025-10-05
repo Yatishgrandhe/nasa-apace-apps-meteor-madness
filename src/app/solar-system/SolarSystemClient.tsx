@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Globe, Zap, Info, ExternalLink as ExternalLinkIcon } from 'lucide-react'
+import StandardLayout from '@/components/StandardLayout'
 
 interface SolarSystemClientProps {
   // Empty interface for future props
@@ -22,46 +23,31 @@ export default function SolarSystemClient({}: SolarSystemClientProps) {
   }, [])
 
   return (
-    <div className="h-screen w-full bg-gradient-to-br from-gray-900 via-black to-indigo-900 relative overflow-hidden flex flex-col">
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMzAiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-20" />
-      
-      {/* Compact Header */}
-      <div className="relative z-10 pt-4 pb-2 px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-7xl 2xl:max-w-[140rem] mx-auto flex items-center justify-between"
+    <StandardLayout
+      title="Solar System 3D"
+      subtitle="Explore our solar system with interactive 3D visualization powered by NASA Eyes"
+    >
+      {/* Info Toggle */}
+      <div className="flex justify-center mb-8">
+        <button
+          onClick={() => setShowInfo(!showInfo)}
+          className="inline-flex items-center space-x-2 px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 rounded-lg transition-colors"
         >
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center glow-orange">
-              <Globe className="w-4 h-4 text-white" />
-            </div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 bg-clip-text text-transparent">
-              Solar System 3D
-            </h1>
-          </div>
-          
-          {/* Info Toggle */}
-          <button
-            onClick={() => setShowInfo(!showInfo)}
-            className="inline-flex items-center space-x-2 px-3 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 rounded-lg transition-colors"
-          >
-            <Info className="w-4 h-4" />
-            <span className="hidden sm:inline">How to Use</span>
-          </button>
-        </motion.div>
+          <Info className="w-5 h-5" />
+          <span>How to Use</span>
+        </button>
+      </div>
         
-        {/* Info Panel */}
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: showInfo ? 1 : 0, height: showInfo ? 'auto' : 0 }}
-          className="max-w-7xl 2xl:max-w-[140rem] mx-auto mt-4 bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-lg p-3 sm:p-4"
-        >
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-3 sm:gap-4 text-left">
+      {/* Info Panel */}
+      <motion.div
+        initial={{ opacity: 0, height: 0 }}
+        animate={{ opacity: showInfo ? 1 : 0, height: showInfo ? 'auto' : 0 }}
+        className="mb-8 bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-lg p-6"
+      >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 text-left">
             <div>
-              <h3 className="text-xs sm:text-sm font-semibold text-cyan-400 mb-2">Navigation Controls</h3>
-              <ul className="space-y-1 text-xs text-gray-300">
+              <h3 className="text-sm font-semibold text-cyan-400 mb-3">Navigation Controls</h3>
+              <ul className="space-y-2 text-sm text-gray-300">
                 <li>• <strong>Mouse:</strong> Click and drag to rotate view</li>
                 <li>• <strong>Scroll:</strong> Zoom in/out</li>
                 <li>• <strong>Right-click:</strong> Pan the view</li>
@@ -69,8 +55,8 @@ export default function SolarSystemClient({}: SolarSystemClientProps) {
               </ul>
             </div>
             <div>
-              <h3 className="text-xs sm:text-sm font-semibold text-cyan-400 mb-2">Features</h3>
-              <ul className="space-y-1 text-xs text-gray-300">
+              <h3 className="text-sm font-semibold text-cyan-400 mb-3">Features</h3>
+              <ul className="space-y-2 text-sm text-gray-300">
                 <li>• Real-time planetary positions</li>
                 <li>• Spacecraft trajectories</li>
                 <li>• Time controls</li>
@@ -78,8 +64,8 @@ export default function SolarSystemClient({}: SolarSystemClientProps) {
               </ul>
             </div>
             <div>
-              <h3 className="text-xs sm:text-sm font-semibold text-cyan-400 mb-2">Mobile Controls</h3>
-              <ul className="space-y-1 text-xs text-gray-300">
+              <h3 className="text-sm font-semibold text-cyan-400 mb-3">Mobile Controls</h3>
+              <ul className="space-y-2 text-sm text-gray-300">
                 <li>• <strong>Touch:</strong> Single finger to rotate</li>
                 <li>• <strong>Pinch:</strong> Zoom in/out</li>
                 <li>• <strong>Two-finger:</strong> Pan the view</li>
@@ -87,71 +73,79 @@ export default function SolarSystemClient({}: SolarSystemClientProps) {
               </ul>
             </div>
             <div>
-              <h3 className="text-xs sm:text-sm font-semibold text-cyan-400 mb-2">Data Source</h3>
-              <ul className="space-y-1 text-xs text-gray-300">
+              <h3 className="text-sm font-semibold text-cyan-400 mb-3">Data Source</h3>
+              <ul className="space-y-2 text-sm text-gray-300">
                 <li>• NASA JPL Solar System Dynamics</li>
                 <li>• Real-time orbital mechanics</li>
                 <li>• Spacecraft telemetry data</li>
                 <li>• Updated continuously</li>
               </ul>
             </div>
-          </div>
-        </motion.div>
-      </div>
+        </div>
+      </motion.div>
 
-      {/* Main Content - Full Screen */}
-      <div className="relative z-10 flex-1 flex flex-col px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3 }}
-          className="flex-1 flex flex-col"
-        >
+      {/* Main Content */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.3 }}
+      >
           {/* Loading State */}
           {isLoading && (
-            <div className="flex-1 bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-lg flex items-center justify-center">
-              <div className="text-center">
-                <div className="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-cyan-400 text-lg">Loading Solar System...</p>
+            <div className="bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-lg p-2 sm:p-4 lg:p-6">
+              <div className="relative w-full aspect-[4/3] sm:aspect-[16/12] lg:aspect-[16/10] xl:aspect-[21/12] 2xl:aspect-[24/10] flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-cyan-400 text-sm sm:text-base lg:text-lg">Loading Solar System...</p>
+                </div>
               </div>
             </div>
           )}
 
-          {/* NASA Eyes on Solar System Embed - Full Screen */}
-          <div className={`flex-1 transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'} p-2 sm:p-4`}>
-            <iframe
-              src="https://eyes.nasa.gov/apps/solar-system/#/home?rate=0&time=2049-12-30T23%3A59%3A59.999+00%3A00&featured=false&shareButton=false&surfaceMapTiling=true&hd=true&spout=true"
-              width="100%"
-              height="100%"
-              frameBorder="0"
-              allowFullScreen
-              title="NASA Eyes on the Solar System"
-              className="w-full h-full rounded-lg shadow-2xl border border-cyan-500/30"
-              onLoad={() => setIsLoading(false)}
-              style={{
-                minHeight: '60vh', // Minimum height for mobile
-                height: 'calc(100vh - 160px)', // Full height minus header, padding, and margins
-              }}
-            />
+          {/* NASA Eyes on Solar System Embed */}
+          <div className={`transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}>
+            <div className="bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-lg p-2 sm:p-4 lg:p-6">
+              <div className="relative w-full aspect-[4/3] sm:aspect-[16/12] lg:aspect-[16/10] xl:aspect-[21/12] 2xl:aspect-[24/10]">
+                <iframe
+                  src="https://eyes.nasa.gov/apps/solar-system/#/home?rate=0&time=2049-12-30T23%3A59%3A59.999+00%3A00&featured=false&shareButton=false&surfaceMapTiling=true&hd=true&spout=false"
+                  width="100%"
+                  height="100%"
+                  frameBorder="0"
+                  allowFullScreen
+                  title="NASA Eyes on the Solar System"
+                  onError={(e) => {
+                    console.warn('NASA Eyes iframe failed to load, showing fallback');
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.parentElement!.innerHTML = `
+                      <div class="flex items-center justify-center h-full text-gray-400 min-h-[600px] sm:min-h-[700px] lg:min-h-[800px] xl:min-h-[900px] 2xl:min-h-[1000px]">
+                        <div class="text-center p-4">
+                          <div class="text-4xl sm:text-5xl lg:text-6xl mb-4">🌌</div>
+                          <h3 class="text-lg sm:text-xl lg:text-2xl font-semibold mb-2">Solar System 3D Visualization</h3>
+                          <p class="text-sm sm:text-base mb-4">3D visualization temporarily unavailable</p>
+                          <a href="https://eyes.nasa.gov/apps/solar-system/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-2 sm:px-4 sm:py-2 bg-cyan-500/20 border border-cyan-500/30 rounded-lg text-cyan-400 hover:bg-cyan-500/30 transition-colors text-sm sm:text-base">
+                            <span>Visit NASA Eyes on Solar System</span>
+                            <svg class="w-3 h-3 sm:w-4 sm:h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                            </svg>
+                          </a>
+                        </div>
+                      </div>
+                    `;
+                  }}
+                  className="absolute inset-0 w-full h-full rounded-lg shadow-2xl"
+                  onLoad={() => setIsLoading(false)}
+                />
+              </div>
+            </div>
           </div>
-        </motion.div>
-      </div>
 
-      {/* Footer Attribution */}
-      <div className="absolute bottom-0 left-0 right-0 z-10 p-4">
-        <div className="text-center">
-          <p className="text-xs text-gray-400 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 inline-block">
+        {/* Footer Attribution */}
+        <div className="text-center mt-8">
+          <p className="text-sm text-gray-400 bg-black/60 backdrop-blur-sm rounded-lg px-4 py-2 inline-block">
             Powered by NASA API
           </p>
         </div>
-      </div>
-
-      {/* Custom Styles */}
-      <style jsx>{`
-        .glow-orange {
-          box-shadow: 0 0 20px rgba(251, 146, 60, 0.3);
-        }
-      `}</style>
-    </div>
+      </motion.div>
+    </StandardLayout>
   )
 }

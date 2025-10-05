@@ -327,7 +327,14 @@ export default function NEOClient({}: NEOClientProps) {
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value as any)}
-              className="bg-black/20 border border-cyan-500/30 rounded-lg px-3 py-2 text-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+              className="bg-black/20 border border-cyan-500/30 rounded-lg px-3 py-2 text-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 appearance-none cursor-pointer hover:bg-black/30 transition-colors duration-200"
+              style={{
+                backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23667eea' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 0.5rem center',
+                backgroundSize: '1rem',
+                paddingRight: '2rem'
+              }}
             >
               <option value="all">All Types</option>
               <option value="asteroid">Asteroids Only</option>
@@ -337,7 +344,14 @@ export default function NEOClient({}: NEOClientProps) {
             <select
               value={filterHazardous}
               onChange={(e) => setFilterHazardous(e.target.value as any)}
-              className="bg-black/20 border border-cyan-500/30 rounded-lg px-3 py-2 text-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+              className="bg-black/20 border border-cyan-500/30 rounded-lg px-3 py-2 text-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 appearance-none cursor-pointer hover:bg-black/30 transition-colors duration-200"
+              style={{
+                backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23667eea' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 0.5rem center',
+                backgroundSize: '1rem',
+                paddingRight: '2rem'
+              }}
             >
               <option value="all">All Objects</option>
               <option value="hazardous">Hazardous Only</option>
@@ -347,7 +361,14 @@ export default function NEOClient({}: NEOClientProps) {
             <select
               value={filterOrbitClass}
               onChange={(e) => setFilterOrbitClass(e.target.value)}
-              className="bg-black/20 border border-cyan-500/30 rounded-lg px-3 py-2 text-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+              className="bg-black/20 border border-cyan-500/30 rounded-lg px-3 py-2 text-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 appearance-none cursor-pointer hover:bg-black/30 transition-colors duration-200"
+              style={{
+                backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23667eea' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 0.5rem center',
+                backgroundSize: '1rem',
+                paddingRight: '2rem'
+              }}
             >
               <option value="all">All Orbit Classes</option>
               {Object.values(ORBIT_CLASSES).map((orbitClass) => (
@@ -530,7 +551,7 @@ export default function NEOClient({}: NEOClientProps) {
                   </tr>
                 ) : (
                   paginatedObjects.map((obj) => (
-                    <tr key={obj.id} className="hover:bg-hover cursor-pointer" onClick={() => window.location.href = `/asteroid/${obj.id}`}>
+                    <tr key={obj.id} className="hover:bg-hover cursor-pointer" onClick={() => window.location.href = obj.type === 'comet' ? `/comet/${obj.id}` : `/asteroid/${obj.id}`}>
                       <td className="font-medium text-gray-300">{obj.name}</td>
                       <td>
                         <span className={`badge ${obj.type === 'asteroid' ? 'badge-info' : 'badge-warning'}`}>

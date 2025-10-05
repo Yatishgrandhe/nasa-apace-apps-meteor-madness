@@ -1,156 +1,157 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Target, AlertTriangle, Clock, TrendingUp, Zap, Shield, Info } from 'lucide-react'
+import { AlertTriangle, Calendar, Target, Zap, Info, Clock, TrendingUp } from 'lucide-react'
 import StandardLayout from '@/components/StandardLayout'
 import Object3DViewer from '@/components/Object3DViewer'
 import { getOrbitClassInfo, getOrbitClassColor, getOrbitClassBgColor } from '@/lib/utils/orbitClasses'
 
-interface AsteroidDetailClientProps {
-  asteroidId: string
+interface CometDetailClientProps {
+  cometId: string
 }
 
-interface AsteroidDetail {
+interface CometData {
   id: string
   name: string
-  diameter: {
-    min: number
-    max: number
-  }
-  is_potentially_hazardous: boolean
-  close_approach_data: Array<{
-    close_approach_date: string
-    relative_velocity: {
-      kilometers_per_second: string
-      kilometers_per_hour: string
-    }
-    miss_distance: {
-      astronomical: string
-      lunar: string
-      kilometers: string
-    }
-    orbiting_body: string
-  }>
-  orbital_data: {
-    orbit_class: string
-    perihelion_distance: string
-    aphelion_distance: string
-    inclination: string
-    period_yr: string
-  }
-  absolute_magnitude_h: number
+  type: 'comet'
   estimated_diameter: {
-    meters: {
-      estimated_diameter_min: number
-      estimated_diameter_max: number
-    }
     kilometers: {
       estimated_diameter_min: number
       estimated_diameter_max: number
     }
   }
+  is_potentially_hazardous_asteroid: boolean
+  absolute_magnitude_h: number
+  orbital_data: {
+    orbit_class: {
+      orbit_class_type: string
+      orbit_class_description: string
+    }
+    last_observation_date: string
+    perihelion_distance: string
+    aphelion_distance: string
+    orbital_period: string
+    inclination: string
+    eccentricity: string
+  }
+  close_approach_data: Array<{
+    close_approach_date: string
+    miss_distance: {
+      astronomical: string
+      lunar: string
+    }
+    relative_velocity: {
+      kilometers_per_second: string
+      kilometers_per_hour: string
+    }
+    orbiting_body: string
+  }>
 }
 
-export default function AsteroidDetailClient({ asteroidId }: AsteroidDetailClientProps) {
-  const router = useRouter()
-  const [asteroid, setAsteroid] = useState<AsteroidDetail | null>(null)
+export default function CometDetailClient({ cometId }: CometDetailClientProps) {
+  const [comet, setComet] = useState<CometData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchAsteroidDetails = async () => {
+    const fetchCometData = async () => {
       try {
+        console.log('Fetching comet data for ID:', cometId)
         setLoading(true)
-        const response = await fetch(`/api/asteroid/${asteroidId}`)
+        const response = await fetch(`/api/comet/${cometId}`)
+        console.log('Response status:', response.status)
         
         if (!response.ok) {
-          throw new Error('Asteroid not found')
+          throw new Error(`Failed to fetch comet data: ${response.status}`)
         }
         
         const data = await response.json()
-        setAsteroid(data.data)
+        console.log('Received data:', data)
+        setComet(data.data)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch asteroid details')
+        console.error('Error fetching comet data:', err)
+        setError(err instanceof Error ? err.message : 'Failed to load comet data')
       } finally {
         setLoading(false)
       }
     }
 
-    fetchAsteroidDetails()
-  }, [asteroidId])
+    fetchCometData()
+  }, [cometId])
 
   if (loading) {
     return (
       <StandardLayout 
         title="Loading..." 
-        subtitle="Fetching asteroid data from NASA..." 
+        subtitle="Fetching comet data from NASA..." 
         showBackButton={true} 
-        onBackClick={() => router.push('/neo')}
+        onBackClick={() => window.history.back()}
       >
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <div className="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-cyan-400 text-lg">Loading asteroid details...</p>
+          <div className="flex items-center justify-center h-96">
+            <div className="text-center">
+              <div className="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-cyan-400 text-lg">Loading comet data...</p>
+            </div>
           </div>
-        </div>
       </StandardLayout>
     )
   }
 
-  if (error || !asteroid) {
+  if (error || !comet) {
     return (
       <StandardLayout 
-        title="Asteroid Not Found" 
-        subtitle="The requested asteroid could not be found." 
+        title="Comet Not Found" 
+        subtitle="The requested comet could not be found." 
         showBackButton={true} 
-        onBackClick={() => router.push('/neo')}
+        onBackClick={() => window.history.back()}
       >
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <p className="text-gray-300 mb-6">Please check the asteroid ID and try again.</p>
+          <div className="flex items-center justify-center h-96">
+            <div className="text-center">
+              <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+              <p className="text-red-400 text-lg">Failed to load comet data</p>
+              <p className="text-gray-400 text-sm mt-2">{error}</p>
+            </div>
           </div>
-        </div>
       </StandardLayout>
     )
   }
 
-  const orbitInfo = getOrbitClassInfo(String(asteroid.orbital_data?.orbit_class || 'Unknown'))
-  const latestApproach = asteroid.close_approach_data?.[0]
-  const diameterKm = asteroid.estimated_diameter?.kilometers
+  const latestApproach = comet.close_approach_data?.[0]
+  const diameterKm = comet.estimated_diameter?.kilometers
+
+  const orbitInfo = getOrbitClassInfo(String(comet.orbital_data?.orbit_class?.orbit_class_type || 'Unknown'))
 
   return (
     <StandardLayout 
-      title={asteroid.name} 
-      subtitle={`Asteroid ID: ${asteroid.id}`}
+      title={comet.name} 
+      subtitle={`Comet ID: ${comet.id}`}
       showBackButton={true} 
-      onBackClick={() => router.push('/neo')}
+      onBackClick={() => window.history.back()}
     >
       {/* Status Indicator */}
       <div className="flex items-center justify-center mb-8">
-        <div className={`flex items-center space-x-3 px-6 py-3 rounded-full ${asteroid.is_potentially_hazardous ? 'bg-red-500/20 border border-red-500/30' : 'bg-green-500/20 border border-green-500/30'}`}>
-          {asteroid.is_potentially_hazardous ? (
+        <div className={`flex items-center space-x-3 px-6 py-3 rounded-full ${comet.is_potentially_hazardous_asteroid ? 'bg-red-500/20 border border-red-500/30' : 'bg-yellow-500/20 border border-yellow-500/30'}`}>
+          {comet.is_potentially_hazardous_asteroid ? (
             <AlertTriangle className="w-5 h-5 text-red-400" />
           ) : (
-            <Shield className="w-5 h-5 text-green-400" />
+            <Target className="w-5 h-5 text-yellow-400" />
           )}
-          <span className={`font-medium ${asteroid.is_potentially_hazardous ? 'text-red-400' : 'text-green-400'}`}>
-            {asteroid.is_potentially_hazardous ? 'Potentially Hazardous' : 'Safe Asteroid'}
+          <span className={`font-medium ${comet.is_potentially_hazardous_asteroid ? 'text-red-400' : 'text-yellow-400'}`}>
+            {comet.is_potentially_hazardous_asteroid ? 'Potentially Hazardous' : 'Comet'}
           </span>
         </div>
       </div>
 
       {/* 3D Object Visualization */}
       <Object3DViewer 
-        objectId={asteroid.id} 
-        objectName={asteroid.name} 
-        objectType="asteroid"
-              className="mb-8"
+        objectId={comet.id} 
+        objectName={comet.name} 
+        objectType="comet"
+        className="mb-8"
       />
 
-      {/* Asteroid Information Grid */}
+      {/* Comet Information Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {/* Physical Properties */}
         <div className="bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 shadow-lg glow-blue">
@@ -164,12 +165,12 @@ export default function AsteroidDetailClient({ asteroidId }: AsteroidDetailClien
                 <span className="text-gray-300">Diameter:</span>
                 <span className="text-white font-medium">
                   {diameterKm.estimated_diameter_min.toFixed(2)} - {diameterKm.estimated_diameter_max.toFixed(2)} km
-                </span>
+            </span>
               </div>
             )}
             <div className="flex justify-between items-center">
               <span className="text-gray-300">Absolute Magnitude:</span>
-              <span className="text-white font-medium">{asteroid.absolute_magnitude_h}</span>
+              <span className="text-white font-medium">{comet.absolute_magnitude_h}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-300">Orbital Class:</span>
@@ -187,28 +188,28 @@ export default function AsteroidDetailClient({ asteroidId }: AsteroidDetailClien
             <span>Orbital Characteristics</span>
           </h3>
           <div className="space-y-4">
-            {asteroid.orbital_data?.perihelion_distance && (
+            {comet.orbital_data?.perihelion_distance && (
               <div className="flex justify-between items-center">
                 <span className="text-gray-300">Perihelion Distance:</span>
-                <span className="text-white font-medium">{parseFloat(asteroid.orbital_data.perihelion_distance).toFixed(3)} AU</span>
+                <span className="text-white font-medium">{parseFloat(comet.orbital_data.perihelion_distance).toFixed(3)} AU</span>
               </div>
             )}
-            {asteroid.orbital_data?.aphelion_distance && (
+            {comet.orbital_data?.aphelion_distance && (
               <div className="flex justify-between items-center">
                 <span className="text-gray-300">Aphelion Distance:</span>
-                <span className="text-white font-medium">{parseFloat(asteroid.orbital_data.aphelion_distance).toFixed(3)} AU</span>
-                </div>
+                <span className="text-white font-medium">{parseFloat(comet.orbital_data.aphelion_distance).toFixed(3)} AU</span>
+              </div>
             )}
-            {asteroid.orbital_data?.inclination && (
+            {comet.orbital_data?.inclination && (
               <div className="flex justify-between items-center">
                 <span className="text-gray-300">Inclination:</span>
-                <span className="text-white font-medium">{parseFloat(asteroid.orbital_data.inclination).toFixed(2)}°</span>
-                </div>
+                <span className="text-white font-medium">{parseFloat(comet.orbital_data.inclination).toFixed(2)}°</span>
+              </div>
             )}
-            {asteroid.orbital_data?.period_yr && (
+            {comet.orbital_data?.orbital_period && (
               <div className="flex justify-between items-center">
                 <span className="text-gray-300">Orbital Period:</span>
-                <span className="text-white font-medium">{parseFloat(asteroid.orbital_data.period_yr).toFixed(2)} years</span>
+                <span className="text-white font-medium">{parseFloat(comet.orbital_data.orbital_period).toFixed(2)} years</span>
               </div>
             )}
           </div>
@@ -235,10 +236,10 @@ export default function AsteroidDetailClient({ asteroidId }: AsteroidDetailClien
       {/* Close Approach Data */}
       {latestApproach && (
         <div className="bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 shadow-lg glow-blue">
-              <h3 className="text-xl font-semibold text-cyan-400 mb-4 flex items-center space-x-2">
+          <h3 className="text-xl font-semibold text-cyan-400 mb-4 flex items-center space-x-2">
             <Clock className="w-5 h-5" />
             <span>Latest Close Approach</span>
-              </h3>
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
               <div className="text-2xl font-bold text-white mb-1">
@@ -259,7 +260,7 @@ export default function AsteroidDetailClient({ asteroidId }: AsteroidDetailClien
               <div className="text-sm text-gray-400">Velocity (km/s)</div>
             </div>
           </div>
-        </div>
+          </div>
       )}
     </StandardLayout>
   )

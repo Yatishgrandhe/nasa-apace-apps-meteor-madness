@@ -32,9 +32,50 @@ export default function RootLayout({
             __html: `
               // Remove browser extension attributes that cause hydration mismatches
               (function() {
+                // Remove attributes immediately and aggressively
+                function removeExtensionAttributes() {
+                  const allElements = document.querySelectorAll('*');
+                  allElements.forEach(function(el) {
+                    el.removeAttribute('bis_skin_checked');
+                    el.removeAttribute('data-bis_skin_checked');
+                    // Remove from any existing elements
+                    if (el.hasAttribute('bis_skin_checked')) {
+                      el.removeAttribute('bis_skin_checked');
+                    }
+                    if (el.hasAttribute('data-bis_skin_checked')) {
+                      el.removeAttribute('data-bis_skin_checked');
+                    }
+                  });
+                }
+                
+                // Remove attributes immediately
+                removeExtensionAttributes();
+                
+                // Remove attributes as soon as possible
+                if (document.readyState === 'loading') {
+                  document.addEventListener('DOMContentLoaded', removeExtensionAttributes);
+                } else {
+                  removeExtensionAttributes();
+                }
+                
+                // Set up aggressive observer for dynamic content
                 if (typeof window !== 'undefined') {
                   const observer = new MutationObserver(function(mutations) {
                     mutations.forEach(function(mutation) {
+                      // Handle attribute changes
+                      if (mutation.type === 'attributes') {
+                        const target = mutation.target;
+                        if (target.nodeType === 1) {
+                          if (target.hasAttribute('bis_skin_checked')) {
+                            target.removeAttribute('bis_skin_checked');
+                          }
+                          if (target.hasAttribute('data-bis_skin_checked')) {
+                            target.removeAttribute('data-bis_skin_checked');
+                          }
+                        }
+                      }
+                      
+                      // Handle added nodes
                       mutation.addedNodes.forEach(function(node) {
                         if (node.nodeType === 1) { // Element node
                           // Remove common browser extension attributes
@@ -52,15 +93,29 @@ export default function RootLayout({
                     });
                   });
                   
-                  // Start observing when DOM is ready
+                  // Start observing with all mutation types
                   if (document.readyState === 'loading') {
                     document.addEventListener('DOMContentLoaded', function() {
-                      observer.observe(document.body, { childList: true, subtree: true });
+                      observer.observe(document.body, { 
+                        childList: true, 
+                        subtree: true, 
+                        attributes: true,
+                        attributeFilter: ['bis_skin_checked', 'data-bis_skin_checked']
+                      });
                     });
                   } else {
-                    observer.observe(document.body, { childList: true, subtree: true });
+                    observer.observe(document.body, { 
+                      childList: true, 
+                      subtree: true, 
+                      attributes: true,
+                      attributeFilter: ['bis_skin_checked', 'data-bis_skin_checked']
+                    });
                   }
                 }
+                
+                // Also run on window load and periodically
+                window.addEventListener('load', removeExtensionAttributes);
+                setInterval(removeExtensionAttributes, 1000);
               })();
             `,
           }}
