@@ -6,6 +6,7 @@ import { AlertTriangle, Calendar, Target, Zap, Info, Clock, TrendingUp } from 'l
 import StandardLayout from '@/components/StandardLayout'
 import Object3DViewer from '@/components/Object3DViewer'
 import AIResponse from '@/components/AIResponse'
+import NASAEyesIframe from '@/components/NASAEyesIframe'
 import { getOrbitClassInfo, getOrbitClassColor, getOrbitClassBgColor } from '@/lib/utils/orbitClasses'
 import { analyzeSingleObjectWithGemini, type SingleObjectAnalysisRequest } from '@/lib/api/gemini'
 
@@ -333,6 +334,16 @@ export default function CometDetailClient({ cometId }: CometDetailClientProps) {
           </div>
         )}
       </div>
+
+      {/* NASA Eyes on the Solar System */}
+      {comet && (
+        <NASAEyesIframe
+          objectId={comet.id}
+          objectName={comet.name}
+          objectType="comet"
+          className="mt-8"
+        />
+      )}
     </StandardLayout>
   )
 }

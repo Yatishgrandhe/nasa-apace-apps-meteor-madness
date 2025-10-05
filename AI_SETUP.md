@@ -8,7 +8,7 @@ Create a `.env.local` file in the root directory with the following variables:
 
 ```bash
 # Gemini AI API Configuration
-NEXT_PUBLIC_GEMINI_API_KEY=your_actual_gemini_api_key_here
+NEXT_PUBLIC_GEMINI_API_KEY=AIzaSyB42RrQJ3LCmZhX-EvGYNiDNLjr2r3TcIk
 
 # TomTom Maps API Configuration
 NEXT_PUBLIC_TOMTOM_API_KEY=Y32adpWPu6FZiymeEGLywvaGqKce0Jva
@@ -41,6 +41,13 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 - **Multiple Scenarios**: Nominal, worst-case, and best-case impact predictions
 - **Fullscreen Mode**: Full-screen map viewing for detailed analysis
 
+### NASA Eyes Integration
+- **Asteroid Detail Pages**: Auto-loads specific asteroid in NASA Eyes on the Solar System
+- **Comet Detail Pages**: Auto-loads specific comet in NASA Eyes on the Solar System
+- **Interactive 3D Visualization**: Real-time orbital mechanics and trajectory visualization
+- **Fullscreen Mode**: Full-screen NASA Eyes experience
+- **External Link**: Open NASA Eyes in new tab for enhanced features
+
 ### Analysis Includes
 - Risk assessment and threat level
 - Potential impact scenarios
@@ -57,6 +64,15 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 - **Crater Modeling**: Predicts crater size and depth
 - **Affected Area**: Calculates blast radius and thermal effects
 - **Geographic Context**: Identifies country and region of potential impact
+
+### NASA Eyes Features
+- **Auto-Loading**: Automatically loads the specific asteroid or comet being viewed
+- **Real-Time Data**: Uses NASA's latest orbital mechanics data
+- **3D Visualization**: Interactive 3D view of the solar system
+- **Orbital Trajectory**: Shows approach path and future positions
+- **Time Controls**: Play, pause, and speed controls for time progression
+- **Multiple Views**: Different camera angles and perspectives
+- **Object Focus**: Automatic focus on the selected asteroid or comet
 
 ### Fallback Behavior
 If no API key is provided or the API is unavailable, the system will:
@@ -86,11 +102,13 @@ If no API key is provided or the API is unavailable, the system will:
 
 1. Set up your environment variables as described above
 2. Restart your development server
-3. Navigate to any asteroid detail page
+3. Navigate to any asteroid or comet detail page
 4. AI analysis will automatically load and display
 5. Impact prediction map will show potential impact locations
-6. Use fullscreen mode for detailed map analysis
-7. Switch between different impact scenarios (nominal, worst-case, best-case)
+6. NASA Eyes iframe will auto-load the specific object in 3D visualization
+7. Use fullscreen mode for detailed map and NASA Eyes analysis
+8. Switch between different impact scenarios (nominal, worst-case, best-case)
+9. Interact with NASA Eyes controls for orbital mechanics exploration
 
 ## Troubleshooting
 
@@ -101,6 +119,9 @@ If no API key is provided or the API is unavailable, the system will:
 - **Map not loading**: Verify your TomTom API key is correctly set
 - **Impact prediction shows "No Impact Predicted"**: Asteroid has very low impact probability (< 0.1%)
 - **Fullscreen mode not working**: Check browser permissions for fullscreen API
+- **NASA Eyes not loading**: Check if NASA Eyes is accessible and object ID is valid
+- **Iframe blocked by browser**: Some browsers may block iframes, use external link option
+- **Chrome third-party cookies warning**: This is normal and doesn't affect functionality
 
 ### Debug Mode
 Check the browser console for detailed error messages if analysis fails.

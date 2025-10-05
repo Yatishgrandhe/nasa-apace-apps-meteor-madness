@@ -8,6 +8,7 @@ import StandardLayout from '@/components/StandardLayout'
 import Object3DViewer from '@/components/Object3DViewer'
 import AIResponse from '@/components/AIResponse'
 import ImpactMap from '@/components/ImpactMap'
+import NASAEyesIframe from '@/components/NASAEyesIframe'
 import { getOrbitClassInfo, getOrbitClassColor, getOrbitClassBgColor } from '@/lib/utils/orbitClasses'
 import { analyzeSingleObjectWithGemini, type SingleObjectAnalysisRequest } from '@/lib/api/gemini'
 
@@ -357,6 +358,16 @@ export default function AsteroidDetailClient({ asteroidId }: AsteroidDetailClien
       {asteroidForMap && (
         <ImpactMap 
           asteroid={asteroidForMap} 
+          className="mt-8"
+        />
+      )}
+
+      {/* NASA Eyes on the Solar System */}
+      {asteroid && (
+        <NASAEyesIframe
+          objectId={asteroid.id}
+          objectName={asteroid.name}
+          objectType="asteroid"
           className="mt-8"
         />
       )}

@@ -41,7 +41,7 @@ export async function analyzeImpactWithGemini(data: GeminiAnalysisRequest): Prom
     const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY
     
     if (!apiKey || apiKey === 'your_gemini_api_key_here') {
-      // Return mock analysis if no API key is available
+      console.warn('Gemini API key not found or invalid. Using mock analysis.')
       return generateMockAnalysis(data)
     }
 
@@ -99,7 +99,7 @@ export async function analyzeSingleObjectWithGemini(data: SingleObjectAnalysisRe
     const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY
     
     if (!apiKey || apiKey === 'your_gemini_api_key_here') {
-      // Return mock analysis if no API key is available
+      console.warn('Gemini API key not found or invalid. Using mock analysis.')
       return generateSingleObjectMockAnalysis(data)
     }
 
