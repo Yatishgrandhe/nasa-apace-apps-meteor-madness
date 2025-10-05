@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { determineOrbitClass, predictOrbitClassWithAI } from '@/lib/utils/orbitClassCalculator'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -40,9 +41,41 @@ export async function GET(request: NextRequest) {
     const allObjects = Object.values(neoData.near_earth_objects || {}).flat()
     const neoIds = allObjects.map(obj => obj.id).filter(Boolean)
 
+    // Fetch detailed orbital data for each object
+    const objectsWithOrbitalData = await Promise.all(
+      allObjects.map(async (obj) => {
+        try {
+          // Fetch individual object data with orbital information
+          const individualResponse = await fetch(
+            `https://api.nasa.gov/neo/rest/v1/neo/${obj.id}?api_key=${apiKey}`,
+            {
+              signal: controller.signal,
+              headers: {
+                'Accept': 'application/json',
+                'User-Agent': 'Meteor-Madness/1.0'
+              }
+            }
+          )
+          
+          if (individualResponse.ok) {
+            const individualData = await individualResponse.json()
+            return {
+              ...obj,
+              orbital_data: individualData.orbital_data || null,
+              is_potentially_hazardous_asteroid: individualData.is_potentially_hazardous_asteroid || obj.is_potentially_hazardous_asteroid
+            }
+          }
+        } catch (error) {
+          console.warn(`Failed to fetch individual data for ${obj.id}:`, error)
+        }
+        
+        return obj
+      })
+    )
+
     // Fetch orbital data for each NEO from JPL Small-Body Database
     const enhancedObjects = await Promise.all(
-      allObjects.map(async (obj) => {
+      objectsWithOrbitalData.map(async (obj) => {
         try {
           // Fetch orbital data from JPL API
           const orbitalResponse = await fetch(
@@ -59,23 +92,51 @@ export async function GET(request: NextRequest) {
           if (orbitalResponse.ok) {
             const orbitalData = await orbitalResponse.json()
             
-            // Extract orbit class from JPL data
-            if (orbitalData.object && orbitalData.orbit) {
-              const orbitClass = orbitalData.object.class || orbitalData.orbit.class || 'Unknown'
-              const orbitDescription = orbitalData.object.class_name || 
-                                     orbitalData.orbit.class_name || 
-                                     getOrbitClassDescription(orbitClass)
-              
-              // Add orbital data to the NEO object
-              return {
+            // Use enhanced orbit class determination with real orbital data
+            let orbitClassification
+            try {
+              // Create a combined object with both NASA and JPL data
+              const combinedData = {
                 ...obj,
-                orbital_data: {
-                  orbit_class: {
-                    orbit_class_type: orbitClass,
-                    orbit_class_description: orbitDescription
-                  },
+                orbital_data: obj.orbital_data || {}
+              }
+              
+              orbitClassification = determineOrbitClass(combinedData, orbitalData)
+              
+              // If still unknown, try AI prediction
+              if (orbitClassification.orbitClass === 'Unknown' && orbitClassification.confidence < 50) {
+                orbitClassification = await predictOrbitClassWithAI(combinedData)
+              }
+            } catch (error) {
+              console.warn(`Error determining orbit class for ${obj.id}:`, error)
+              orbitClassification = {
+                orbitClass: 'Unknown',
+                description: 'Orbit class could not be determined',
+                confidence: 0,
+                method: 'fallback',
+                riskLevel: 'Low'
+              }
+            }
+            
+            // Add enhanced orbital data to the NEO object
+            return {
+              ...obj,
+              orbital_data: {
+                orbit_class: orbitClassification.orbitClass,
+                orbit_class_description: orbitClassification.description,
+                orbit_class_confidence: orbitClassification.confidence,
+                orbit_class_method: orbitClassification.method,
+                orbit_class_risk_level: orbitClassification.riskLevel,
+                // Include JPL data if available
+                ...(orbitalData.orbit ? {
+                  jpl_semi_major_axis: orbitalData.orbit.a,
+                  jpl_eccentricity: orbitalData.orbit.e,
+                  jpl_inclination: orbitalData.orbit.i,
+                  jpl_perihelion_distance: orbitalData.orbit.q,
+                  jpl_aphelion_distance: orbitalData.orbit.Q,
+                  jpl_period_yr: orbitalData.orbit.per,
                   last_observation_date: orbitalData.orbit.last_obs || obj.close_approach_data?.[0]?.close_approach_date || new Date().toISOString().split('T')[0]
-                }
+                } : {})
               }
             }
           }
@@ -83,14 +144,40 @@ export async function GET(request: NextRequest) {
           console.warn(`Failed to fetch orbital data for ${obj.id}:`, orbitalError)
         }
 
-        // Return original object with default orbital data
+        // Return original object with calculated orbit class as fallback
+        let fallbackClassification
+        try {
+          // Create a combined object with orbital data if available
+          const combinedData = {
+            ...obj,
+            orbital_data: obj.orbital_data || {}
+          }
+          
+          // First try to calculate from available orbital data
+          fallbackClassification = determineOrbitClass(combinedData)
+          
+          // If still unknown and we have orbital data, try AI prediction
+          if (fallbackClassification.orbitClass === 'Unknown' && obj.orbital_data) {
+            fallbackClassification = await predictOrbitClassWithAI(combinedData)
+          }
+        } catch (error) {
+          fallbackClassification = {
+            orbitClass: 'Unknown',
+            description: 'Orbit class could not be determined',
+            confidence: 0,
+            method: 'fallback',
+            riskLevel: 'Low'
+          }
+        }
+
         return {
           ...obj,
           orbital_data: {
-            orbit_class: {
-              orbit_class_type: 'Unknown',
-              orbit_class_description: 'Orbit class not available'
-            },
+            orbit_class: fallbackClassification.orbitClass,
+            orbit_class_description: fallbackClassification.description,
+            orbit_class_confidence: fallbackClassification.confidence,
+            orbit_class_method: fallbackClassification.method,
+            orbit_class_risk_level: fallbackClassification.riskLevel,
             last_observation_date: obj.close_approach_data?.[0]?.close_approach_date || new Date().toISOString().split('T')[0]
           }
         }

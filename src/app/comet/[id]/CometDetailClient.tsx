@@ -1,11 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { AlertTriangle, Calendar, Target, Zap, Info, Clock, TrendingUp, Globe, ExternalLink } from 'lucide-react'
+import { AlertTriangle, Calendar, Target, Zap, Info, Clock, TrendingUp, Globe, ExternalLink, Shield } from 'lucide-react'
 import StandardLayout from '@/components/StandardLayout'
 import Object3DViewer from '@/components/Object3DViewer'
 import AIResponse from '@/components/AIResponse'
+import ImpactMap from '@/components/ImpactMap'
+import MitigationStrategies from '@/components/MitigationStrategies'
 import { getOrbitClassInfo, getOrbitClassColor, getOrbitClassBgColor } from '@/lib/utils/orbitClasses'
 import { analyzeSingleObjectWithGemini, type SingleObjectAnalysisRequest } from '@/lib/api/gemini'
 
@@ -19,6 +22,10 @@ interface CometData {
   type: 'comet'
   estimated_diameter: {
     kilometers: {
+      estimated_diameter_min: number
+      estimated_diameter_max: number
+    }
+    meters?: {
       estimated_diameter_min: number
       estimated_diameter_max: number
     }
@@ -52,11 +59,26 @@ interface CometData {
 }
 
 export default function CometDetailClient({ cometId }: CometDetailClientProps) {
+  const router = useRouter()
   const [comet, setComet] = useState<CometData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [aiAnalysis, setAiAnalysis] = useState<string>('')
   const [aiLoading, setAiLoading] = useState(false)
+
+  const handleBackClick = () => {
+    // Use document.referrer to check if user came from another page
+    const referrer = document.referrer
+    const currentPath = window.location.pathname
+    
+    if (referrer && referrer !== window.location.href && referrer.includes(window.location.origin)) {
+      // User came from another page in our app, go back
+      router.back()
+    } else {
+      // User came from external source or direct URL, go to NEO page
+      router.push('/neo')
+    }
+  }
 
   useEffect(() => {
     const fetchCometData = async () => {
@@ -96,8 +118,10 @@ export default function CometDetailClient({ cometId }: CometDetailClientProps) {
           name: comet.name,
           type: 'comet',
           diameter: {
-            min: comet.estimated_diameter.kilometers.estimated_diameter_min * 1000, // Convert to meters
-            max: comet.estimated_diameter.kilometers.estimated_diameter_max * 1000
+            min: comet.estimated_diameter.meters?.estimated_diameter_min || 
+                 comet.estimated_diameter.kilometers.estimated_diameter_min * 1000,
+            max: comet.estimated_diameter.meters?.estimated_diameter_max || 
+                 comet.estimated_diameter.kilometers.estimated_diameter_max * 1000
           },
           isHazardous: comet.is_potentially_hazardous_asteroid,
           missDistance: parseFloat(closestApproach.miss_distance.astronomical),
@@ -129,7 +153,7 @@ export default function CometDetailClient({ cometId }: CometDetailClientProps) {
         title="Loading..." 
         subtitle="Fetching comet data from NASA..." 
         showBackButton={true} 
-        onBackClick={() => window.history.back()}
+        onBackClick={handleBackClick}
       >
           <div className="flex items-center justify-center h-96">
             <div className="text-center">
@@ -147,7 +171,7 @@ export default function CometDetailClient({ cometId }: CometDetailClientProps) {
         title="Comet Not Found" 
         subtitle="The requested comet could not be found." 
         showBackButton={true} 
-        onBackClick={() => window.history.back()}
+        onBackClick={handleBackClick}
       >
           <div className="flex items-center justify-center h-96">
             <div className="text-center">
@@ -163,26 +187,80 @@ export default function CometDetailClient({ cometId }: CometDetailClientProps) {
   const latestApproach = comet.close_approach_data?.[0]
   const diameterKm = comet.estimated_diameter?.kilometers
 
-  const orbitInfo = getOrbitClassInfo(String(comet.orbital_data?.orbit_class?.orbit_class_type || 'Unknown'))
+  const orbitClassType = comet.orbital_data?.orbit_class?.orbit_class_type
+  const orbitInfo = getOrbitClassInfo(orbitClassType || 'Unknown')
+
+  // Transform comet data for map component
+  const cometForMap = comet ? {
+    id: comet.id,
+    name: comet.name,
+    estimated_diameter: {
+      meters: {
+        estimated_diameter_min: comet.estimated_diameter.meters?.estimated_diameter_min || 
+                               comet.estimated_diameter.kilometers.estimated_diameter_min * 1000,
+        estimated_diameter_max: comet.estimated_diameter.meters?.estimated_diameter_max || 
+                               comet.estimated_diameter.kilometers.estimated_diameter_max * 1000
+      }
+    },
+    is_potentially_hazardous: comet.is_potentially_hazardous_asteroid,
+    close_approach_data: comet.close_approach_data,
+    absolute_magnitude_h: comet.absolute_magnitude_h,
+    orbital_data: {
+      orbit_class: comet.orbital_data.orbit_class.orbit_class_type,
+      perihelion_distance: comet.orbital_data.perihelion_distance,
+      aphelion_distance: comet.orbital_data.aphelion_distance,
+      inclination: comet.orbital_data.inclination,
+      period_yr: comet.orbital_data.orbital_period,
+    }
+  } : null
 
   return (
     <StandardLayout 
       title={comet.name} 
       subtitle={`Comet ID: ${comet.id}`}
       showBackButton={true} 
-      onBackClick={() => window.history.back()}
+      onBackClick={handleBackClick}
     >
-      {/* Status Indicator */}
-      <div className="flex items-center justify-center mb-8">
-        <div className={`flex items-center space-x-3 px-6 py-3 rounded-full ${comet.is_potentially_hazardous_asteroid ? 'bg-red-500/20 border border-red-500/30' : 'bg-yellow-500/20 border border-yellow-500/30'}`}>
-          {comet.is_potentially_hazardous_asteroid ? (
-            <AlertTriangle className="w-5 h-5 text-red-400" />
-          ) : (
-            <Target className="w-5 h-5 text-yellow-400" />
-          )}
-          <span className={`font-medium ${comet.is_potentially_hazardous_asteroid ? 'text-red-400' : 'text-yellow-400'}`}>
-            {comet.is_potentially_hazardous_asteroid ? 'Potentially Hazardous' : 'Comet'}
-          </span>
+      {/* Enhanced Status Indicator */}
+      <div className="mb-8">
+        <div className={`w-full p-6 rounded-xl border-2 shadow-lg ${comet.is_potentially_hazardous_asteroid 
+          ? 'bg-gradient-to-r from-red-500/20 to-orange-500/20 border-red-500/50 glow-red' 
+          : 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border-blue-500/50 glow-blue'
+        }`}>
+          <div className="flex items-center justify-center space-x-4">
+            <div className={`p-3 rounded-full ${comet.is_potentially_hazardous_asteroid 
+              ? 'bg-gradient-to-r from-red-500 to-orange-500' 
+              : 'bg-gradient-to-r from-blue-500 to-cyan-500'
+            }`}>
+              {comet.is_potentially_hazardous_asteroid ? (
+                <AlertTriangle className="w-8 h-8 text-white" />
+              ) : (
+                <Target className="w-8 h-8 text-white" />
+              )}
+            </div>
+            <div className="text-center">
+              <h2 className={`text-2xl font-bold ${comet.is_potentially_hazardous_asteroid ? 'text-red-400' : 'text-blue-400'}`}>
+                {comet.is_potentially_hazardous_asteroid ? 'POTENTIALLY HAZARDOUS' : 'COMET'}
+              </h2>
+              <p className={`text-lg ${comet.is_potentially_hazardous_asteroid ? 'text-red-300' : 'text-blue-300'}`}>
+                {comet.is_potentially_hazardous_asteroid 
+                  ? 'This comet poses a potential threat to Earth' 
+                  : 'This comet is being monitored for scientific study'
+                }
+              </p>
+              <div className="flex items-center justify-center space-x-4 mt-2">
+                <span className="text-sm text-gray-300">
+                  Orbit Class: <span className="font-semibold text-white">{orbitInfo.name}</span>
+                </span>
+                <span className="text-gray-400">•</span>
+                <span className="text-sm text-gray-300">
+                  Risk Level: <span className={`font-semibold ${orbitInfo.riskLevel === 'High' ? 'text-red-400' : orbitInfo.riskLevel === 'Medium' ? 'text-yellow-400' : 'text-blue-400'}`}>
+                    {orbitInfo.riskLevel}
+                  </span>
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -203,12 +281,17 @@ export default function CometDetailClient({ cometId }: CometDetailClientProps) {
             <span>Physical Properties</span>
           </h3>
           <div className="space-y-4">
-            {diameterKm && (
+            {diameterKm && diameterKm.estimated_diameter_min && diameterKm.estimated_diameter_max ? (
               <div className="flex justify-between items-center">
                 <span className="text-gray-300">Diameter:</span>
                 <span className="text-white font-medium">
                   {diameterKm.estimated_diameter_min.toFixed(2)} - {diameterKm.estimated_diameter_max.toFixed(2)} km
-            </span>
+                </span>
+              </div>
+            ) : (
+              <div className="flex justify-between items-center">
+                <span className="text-gray-300">Diameter:</span>
+                <span className="text-gray-400 font-medium">Not available</span>
               </div>
             )}
             <div className="flex justify-between items-center">
@@ -217,8 +300,8 @@ export default function CometDetailClient({ cometId }: CometDetailClientProps) {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-300">Orbital Class:</span>
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getOrbitClassBgColor(orbitInfo.type)} ${getOrbitClassColor(orbitInfo.type)}`}>
-                {orbitInfo.type}
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getOrbitClassBgColor(orbitInfo.name)} ${getOrbitClassColor(orbitInfo.name)}`}>
+                {orbitInfo.name}
               </span>
             </div>
           </div>
@@ -231,30 +314,42 @@ export default function CometDetailClient({ cometId }: CometDetailClientProps) {
             <span>Orbital Characteristics</span>
           </h3>
           <div className="space-y-4">
-            {comet.orbital_data?.perihelion_distance && (
-              <div className="flex justify-between items-center">
-                <span className="text-gray-300">Perihelion Distance:</span>
-                <span className="text-white font-medium">{parseFloat(comet.orbital_data.perihelion_distance).toFixed(3)} AU</span>
-              </div>
-            )}
-            {comet.orbital_data?.aphelion_distance && (
-              <div className="flex justify-between items-center">
-                <span className="text-gray-300">Aphelion Distance:</span>
-                <span className="text-white font-medium">{parseFloat(comet.orbital_data.aphelion_distance).toFixed(3)} AU</span>
-              </div>
-            )}
-            {comet.orbital_data?.inclination && (
-              <div className="flex justify-between items-center">
-                <span className="text-gray-300">Inclination:</span>
-                <span className="text-white font-medium">{parseFloat(comet.orbital_data.inclination).toFixed(2)}°</span>
-              </div>
-            )}
-            {comet.orbital_data?.orbital_period && (
-              <div className="flex justify-between items-center">
-                <span className="text-gray-300">Orbital Period:</span>
-                <span className="text-white font-medium">{parseFloat(comet.orbital_data.orbital_period).toFixed(2)} years</span>
-              </div>
-            )}
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">Perihelion Distance:</span>
+              <span className="text-white font-medium">
+                {comet.orbital_data?.perihelion_distance 
+                  ? `${parseFloat(comet.orbital_data.perihelion_distance).toFixed(3)} AU`
+                  : 'Not available'
+                }
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">Aphelion Distance:</span>
+              <span className="text-white font-medium">
+                {comet.orbital_data?.aphelion_distance 
+                  ? `${parseFloat(comet.orbital_data.aphelion_distance).toFixed(3)} AU`
+                  : 'Not available'
+                }
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">Inclination:</span>
+              <span className="text-white font-medium">
+                {comet.orbital_data?.inclination 
+                  ? `${parseFloat(comet.orbital_data.inclination).toFixed(2)}°`
+                  : 'Not available'
+                }
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">Orbital Period:</span>
+              <span className="text-white font-medium">
+                {comet.orbital_data?.orbital_period 
+                  ? `${parseFloat(comet.orbital_data.orbital_period).toFixed(2)} years`
+                  : 'Not available'
+                }
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -267,9 +362,9 @@ export default function CometDetailClient({ cometId }: CometDetailClientProps) {
         </h3>
         <div className="space-y-3">
           <div className="flex items-start space-x-3">
-            <div className={`w-3 h-3 rounded-full mt-2 ${getOrbitClassColor(orbitInfo.type)}`}></div>
+            <div className={`w-3 h-3 rounded-full mt-2 ${getOrbitClassColor(orbitInfo.name)}`}></div>
             <div>
-              <h4 className="text-white font-medium">{orbitInfo.type}</h4>
+              <h4 className="text-white font-medium">{orbitInfo.name}</h4>
               <p className="text-gray-300 text-sm">{orbitInfo.description}</p>
             </div>
           </div>
@@ -277,7 +372,7 @@ export default function CometDetailClient({ cometId }: CometDetailClientProps) {
       </div>
 
       {/* Close Approach Data */}
-      {latestApproach && (
+      {latestApproach ? (
         <div className="bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 shadow-lg glow-blue">
           <h3 className="text-xl font-semibold text-cyan-400 mb-4 flex items-center space-x-2">
             <Clock className="w-5 h-5" />
@@ -286,22 +381,41 @@ export default function CometDetailClient({ cometId }: CometDetailClientProps) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
               <div className="text-2xl font-bold text-white mb-1">
-                {new Date(latestApproach.close_approach_date).toLocaleDateString()}
+                {latestApproach.close_approach_date 
+                  ? new Date(latestApproach.close_approach_date).toLocaleDateString()
+                  : 'Not available'
+                }
               </div>
               <div className="text-sm text-gray-400">Approach Date</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-white mb-1">
-                {parseFloat(latestApproach.miss_distance.astronomical).toFixed(3)}
+                {latestApproach.miss_distance?.astronomical
+                  ? parseFloat(latestApproach.miss_distance.astronomical).toFixed(3)
+                  : 'Not available'
+                }
               </div>
               <div className="text-sm text-gray-400">Miss Distance (AU)</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-white mb-1">
-                {parseFloat(latestApproach.relative_velocity.kilometers_per_second).toFixed(2)}
+                {latestApproach.relative_velocity?.kilometers_per_second
+                  ? parseFloat(latestApproach.relative_velocity.kilometers_per_second).toFixed(2)
+                  : 'Not available'
+                }
               </div>
               <div className="text-sm text-gray-400">Velocity (km/s)</div>
             </div>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 shadow-lg glow-blue">
+          <h3 className="text-xl font-semibold text-cyan-400 mb-4 flex items-center space-x-2">
+            <Clock className="w-5 h-5" />
+            <span>Close Approach Data</span>
+          </h3>
+          <div className="text-center py-8">
+            <p className="text-gray-400">Close approach data not available for this comet.</p>
           </div>
         </div>
       )}
@@ -333,6 +447,38 @@ export default function CometDetailClient({ cometId }: CometDetailClientProps) {
           </div>
         )}
       </div>
+
+      {/* Impact Prediction Map - Only for hazardous comets */}
+      {cometForMap && cometForMap.is_potentially_hazardous ? (
+        <ImpactMap 
+          asteroid={cometForMap} 
+          className="mt-8"
+        />
+      ) : cometForMap && (
+        <div className="bg-black/40 backdrop-blur-sm border border-green-500/30 rounded-xl p-6 shadow-lg glow-green mt-8">
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="p-2 bg-gradient-to-r from-green-500 to-green-600 rounded-lg">
+              <Shield className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white">No Impact Risk</h3>
+              <p className="text-gray-400 text-sm">This comet poses no threat to Earth</p>
+            </div>
+          </div>
+          <div className="text-gray-300 text-sm space-y-2">
+            <p>This comet has been classified as non-hazardous and poses no significant risk of impact with Earth.</p>
+            <p>The object's orbital parameters indicate a safe trajectory that will not bring it into dangerous proximity to our planet.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Mitigation Strategies - Only for hazardous comets */}
+      {cometForMap && cometForMap.is_potentially_hazardous && (
+        <MitigationStrategies 
+          asteroid={cometForMap}
+          className="mt-8"
+        />
+      )}
 
     </StandardLayout>
   )

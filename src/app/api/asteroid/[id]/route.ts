@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { determineOrbitClass, predictOrbitClassWithAI } from '@/lib/utils/orbitClassCalculator'
 
 export async function GET(
   request: NextRequest,
@@ -42,6 +43,47 @@ export async function GET(
 
     const data = await response.json()
 
+    // Try to get additional orbital data from JPL
+    let jplData = null
+    try {
+      const jplResponse = await fetch(
+        `https://ssd-api.jpl.nasa.gov/sbdb.api?sstr=${asteroidId}&phys=true&full-prec=true`,
+        {
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'Meteor-Madness/1.0'
+          }
+        }
+      )
+      
+      if (jplResponse.ok) {
+        jplData = await jplResponse.json()
+      }
+    } catch (jplError) {
+      console.warn(`Failed to fetch JPL data for ${asteroidId}:`, jplError)
+    }
+
+    // Determine orbit class using enhanced methods
+    let orbitClassification
+    try {
+      orbitClassification = determineOrbitClass(data, jplData)
+      
+      // If still unknown, try AI prediction
+      if (orbitClassification.orbitClass === 'Unknown' && orbitClassification.confidence < 50) {
+        console.log(`Attempting AI prediction for asteroid ${asteroidId}`)
+        orbitClassification = await predictOrbitClassWithAI(data)
+      }
+    } catch (error) {
+      console.error('Error determining orbit class:', error)
+      orbitClassification = {
+        orbitClass: 'Unknown',
+        description: 'Orbit class could not be determined',
+        confidence: 0,
+        method: 'fallback',
+        riskLevel: 'Low'
+      }
+    }
+
     // Transform the data for our frontend
     const transformedData = {
       id: data.id,
@@ -54,13 +96,32 @@ export async function GET(
         miss_distance: approach.miss_distance,
         orbiting_body: approach.orbiting_body,
       })) || [],
-      orbital_data: data.orbital_data ? {
-        orbit_class: data.orbital_data.orbit_class,
-        perihelion_distance: data.orbital_data.perihelion_distance,
-        aphelion_distance: data.orbital_data.aphelion_distance,
-        inclination: data.orbital_data.inclination,
-        period_yr: data.orbital_data.orbital_period,
-      } : null,
+      orbital_data: {
+        orbit_class: orbitClassification.orbitClass,
+        orbit_class_description: orbitClassification.description,
+        orbit_class_confidence: orbitClassification.confidence,
+        orbit_class_method: orbitClassification.method,
+        orbit_class_risk_level: orbitClassification.riskLevel,
+        // Include original NASA data if available
+        ...(data.orbital_data ? {
+          original_orbit_class: data.orbital_data.orbit_class,
+          perihelion_distance: data.orbital_data.perihelion_distance,
+          aphelion_distance: data.orbital_data.aphelion_distance,
+          inclination: data.orbital_data.inclination,
+          period_yr: data.orbital_data.orbital_period,
+          semi_major_axis: data.orbital_data.semi_major_axis,
+          eccentricity: data.orbital_data.eccentricity,
+        } : {}),
+        // Include JPL data if available
+        ...(jplData?.orbit ? {
+          jpl_semi_major_axis: jplData.orbit.a,
+          jpl_eccentricity: jplData.orbit.e,
+          jpl_inclination: jplData.orbit.i,
+          jpl_perihelion_distance: jplData.orbit.q,
+          jpl_aphelion_distance: jplData.orbit.Q,
+          jpl_period_yr: jplData.orbit.per,
+        } : {})
+      },
       absolute_magnitude_h: data.absolute_magnitude_h,
       estimated_diameter: data.estimated_diameter,
     }

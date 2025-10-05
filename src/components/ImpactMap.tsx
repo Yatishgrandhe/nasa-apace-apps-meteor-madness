@@ -5,9 +5,8 @@ import { motion } from 'framer-motion'
 import { MapPin, AlertTriangle, Maximize2, Minimize2, Target, Info, Zap, Shield, Plus, Minus } from 'lucide-react'
 import { predictAsteroidImpact, generateImpactScenarios, type AsteroidData, type ImpactPrediction } from '@/lib/utils/impactCalculator'
 
-// Import MapLibre GL JS
-import maplibregl from 'maplibre-gl'
-import 'maplibre-gl/dist/maplibre-gl.css'
+// Import MapLibre GL JS with dynamic import for client-side only
+let maplibregl: any = null
 
 interface ImpactMapProps {
   asteroid: AsteroidData
@@ -21,10 +20,48 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
   const [impactPrediction, setImpactPrediction] = useState<ImpactPrediction | null>(null)
   const [scenarios, setScenarios] = useState<ImpactPrediction[]>([])
   const [selectedScenario, setSelectedScenario] = useState<'nominal' | 'worst_case' | 'best_case'>('nominal')
-  const [mapInstance, setMapInstance] = useState<maplibregl.Map | null>(null)
+  const [mapInstance, setMapInstance] = useState<any>(null)
+  const [isClient, setIsClient] = useState(false)
+  const [maplibreLoaded, setMaplibreLoaded] = useState(false)
+
+  // Client-side detection
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  // Dynamic MapLibre import
+  useEffect(() => {
+    if (!isClient) return
+
+    const loadMapLibre = async () => {
+      try {
+        const maplibreModule = await import('maplibre-gl')
+        maplibregl = maplibreModule.default
+        
+        // CSS will be loaded by the browser automatically
+        
+        setMaplibreLoaded(true)
+        console.log('MapLibre GL JS loaded successfully')
+      } catch (error: any) {
+        console.error('Failed to load MapLibre GL JS:', error)
+        setMapLoaded(true) // Still show fallback UI
+      }
+    }
+
+    loadMapLibre()
+  }, [isClient])
 
   useEffect(() => {
     console.log('ImpactMap received asteroid data:', asteroid)
+    
+    // Only calculate impact predictions for hazardous asteroids
+    if (!asteroid.isHazardous) {
+      console.log('Asteroid is not hazardous, skipping impact prediction')
+      setImpactPrediction(null)
+      setScenarios([])
+      return
+    }
+    
     // Calculate impact predictions
     const prediction = predictAsteroidImpact(asteroid)
     const allScenarios = generateImpactScenarios(asteroid)
@@ -37,9 +74,40 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
   }, [asteroid])
 
   useEffect(() => {
-    if (!mapRef.current || !impactPrediction) {
+    // Enhanced null checks and early return
+    if (!isClient || !maplibreLoaded || !maplibregl || !mapRef.current || !impactPrediction) {
       setMapLoaded(true)
       return
+    }
+
+    // Additional safety check for container element
+    const container = mapRef.current
+    if (!container || !container.offsetParent && container.offsetWidth === 0 && container.offsetHeight === 0) {
+      console.warn('Map container not ready, delaying map initialization')
+      setMapLoaded(true)
+      return
+    }
+
+    // Wait for container to have proper dimensions
+    if (container.offsetWidth === 0 || container.offsetHeight === 0) {
+      console.warn('Map container has zero dimensions, delaying initialization')
+      const timeoutId = setTimeout(() => {
+        if (container.offsetWidth > 0 && container.offsetHeight > 0) {
+          // Retry initialization after a delay
+          setMapLoaded(false)
+        }
+      }, 100)
+      return () => clearTimeout(timeoutId)
+    }
+
+    // Clean up any existing map instance
+    if (mapInstance) {
+      try {
+        mapInstance.remove()
+        setMapInstance(null)
+      } catch (error: any) {
+        console.warn('Error removing existing map:', error)
+      }
     }
 
     const tomtomApiKey = process.env.NEXT_PUBLIC_TOMTOM_API_KEY
@@ -110,9 +178,23 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
     }
 
     try {
+      // Validate impact prediction data before map initialization
+      if (!impactPrediction.impactLocation || 
+          typeof impactPrediction.impactLocation.longitude !== 'number' || 
+          typeof impactPrediction.impactLocation.latitude !== 'number') {
+        console.warn('Invalid impact prediction data, using fallback coordinates')
+        impactPrediction.impactLocation = {
+          longitude: 0,
+          latitude: 0,
+          country: 'Unknown',
+          region: 'Unknown',
+          isLand: false
+        }
+      }
+
       // Initialize MapLibre GL JS with realistic Earth styling
       const map = new maplibregl.Map({
-        container: mapRef.current,
+        container: container,
         style: mapStyle,
         center: [impactPrediction.impactLocation.longitude, impactPrediction.impactLocation.latitude],
         zoom: 10,
@@ -129,82 +211,86 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
       map.on('load', () => {
         setMapLoaded(true)
 
-        // Add realistic impact prediction marker with enhanced visuals
-        const impactMarker = document.createElement('div')
-        impactMarker.className = 'impact-marker'
-        impactMarker.style.cssText = `
-          width: 50px;
-          height: 50px;
-          background: radial-gradient(circle, #ff6b35 0%, #f7931e 30%, #ff0000 70%, #8b0000 100%);
-          border: 4px solid #ffffff;
-          border-radius: 50%;
-          box-shadow: 
-            0 0 25px #ff6b35,
-            0 0 50px #ff4444,
-            0 0 75px #ff0000,
-            inset 0 0 15px rgba(255,255,255,0.4),
-            inset 0 0 30px rgba(255,255,255,0.1);
-          animation: realistic-impact-pulse 3s ease-in-out infinite;
-          position: relative;
-          cursor: pointer;
-        `
-        
-        // Add realistic pulsing animation with multiple effects
-        const style = document.createElement('style')
-        style.textContent = `
-          @keyframes realistic-impact-pulse {
-            0% { 
-              transform: scale(1) rotate(0deg); 
-              box-shadow: 
-                0 0 25px #ff6b35,
-                0 0 50px #ff4444,
-                0 0 75px #ff0000,
-                inset 0 0 15px rgba(255,255,255,0.4),
-                inset 0 0 30px rgba(255,255,255,0.1);
+        try {
+          // Add realistic impact prediction marker with enhanced visuals
+          const impactMarker = document.createElement('div')
+          impactMarker.className = 'impact-marker'
+          impactMarker.style.cssText = `
+            width: 50px;
+            height: 50px;
+            background: radial-gradient(circle, #ff6b35 0%, #f7931e 30%, #ff0000 70%, #8b0000 100%);
+            border: 4px solid #ffffff;
+            border-radius: 50%;
+            box-shadow: 
+              0 0 25px #ff6b35,
+              0 0 50px #ff4444,
+              0 0 75px #ff0000,
+              inset 0 0 15px rgba(255,255,255,0.4),
+              inset 0 0 30px rgba(255,255,255,0.1);
+            animation: realistic-impact-pulse 3s ease-in-out infinite;
+            position: relative;
+            cursor: pointer;
+          `
+          
+          // Add realistic pulsing animation with multiple effects
+          const style = document.createElement('style')
+          style.textContent = `
+            @keyframes realistic-impact-pulse {
+              0% { 
+                transform: scale(1) rotate(0deg); 
+                box-shadow: 
+                  0 0 25px #ff6b35,
+                  0 0 50px #ff4444,
+                  0 0 75px #ff0000,
+                  inset 0 0 15px rgba(255,255,255,0.4),
+                  inset 0 0 30px rgba(255,255,255,0.1);
+              }
+              25% { 
+                transform: scale(1.1) rotate(90deg); 
+                box-shadow: 
+                  0 0 35px #ff6b35,
+                  0 0 70px #ff4444,
+                  0 0 105px #ff0000,
+                  inset 0 0 20px rgba(255,255,255,0.5),
+                  inset 0 0 40px rgba(255,255,255,0.2);
+              }
+              50% { 
+                transform: scale(1.3) rotate(180deg); 
+                box-shadow: 
+                  0 0 45px #ff6b35,
+                  0 0 90px #ff4444,
+                  0 0 135px #ff0000,
+                  inset 0 0 25px rgba(255,255,255,0.6),
+                  inset 0 0 50px rgba(255,255,255,0.3);
+              }
+              75% { 
+                transform: scale(1.1) rotate(270deg); 
+                box-shadow: 
+                  0 0 35px #ff6b35,
+                  0 0 70px #ff4444,
+                  0 0 105px #ff0000,
+                  inset 0 0 20px rgba(255,255,255,0.5),
+                  inset 0 0 40px rgba(255,255,255,0.2);
+              }
+              100% { 
+                transform: scale(1) rotate(360deg); 
+                box-shadow: 
+                  0 0 25px #ff6b35,
+                  0 0 50px #ff4444,
+                  0 0 75px #ff0000,
+                  inset 0 0 15px rgba(255,255,255,0.4),
+                  inset 0 0 30px rgba(255,255,255,0.1);
+              }
             }
-            25% { 
-              transform: scale(1.1) rotate(90deg); 
-              box-shadow: 
-                0 0 35px #ff6b35,
-                0 0 70px #ff4444,
-                0 0 105px #ff0000,
-                inset 0 0 20px rgba(255,255,255,0.5),
-                inset 0 0 40px rgba(255,255,255,0.2);
-            }
-            50% { 
-              transform: scale(1.3) rotate(180deg); 
-              box-shadow: 
-                0 0 45px #ff6b35,
-                0 0 90px #ff4444,
-                0 0 135px #ff0000,
-                inset 0 0 25px rgba(255,255,255,0.6),
-                inset 0 0 50px rgba(255,255,255,0.3);
-            }
-            75% { 
-              transform: scale(1.1) rotate(270deg); 
-              box-shadow: 
-                0 0 35px #ff6b35,
-                0 0 70px #ff4444,
-                0 0 105px #ff0000,
-                inset 0 0 20px rgba(255,255,255,0.5),
-                inset 0 0 40px rgba(255,255,255,0.2);
-            }
-            100% { 
-              transform: scale(1) rotate(360deg); 
-              box-shadow: 
-                0 0 25px #ff6b35,
-                0 0 50px #ff4444,
-                0 0 75px #ff0000,
-                inset 0 0 15px rgba(255,255,255,0.4),
-                inset 0 0 30px rgba(255,255,255,0.1);
-            }
-          }
-        `
-        document.head.appendChild(style)
+          `
+          document.head.appendChild(style)
 
-        new maplibregl.Marker(impactMarker)
-          .setLngLat([impactPrediction.impactLocation.longitude, impactPrediction.impactLocation.latitude])
-          .addTo(map)
+          new maplibregl.Marker(impactMarker)
+            .setLngLat([impactPrediction.impactLocation.longitude, impactPrediction.impactLocation.latitude])
+            .addTo(map)
+        } catch (error: any) {
+          console.warn('Error adding impact marker:', error)
+        }
 
         // Add impact zone circle using GeoJSON
         const impactZoneGeoJSON = {
@@ -236,61 +322,65 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
           }]
         }
 
-        // Add realistic impact zone with enhanced visuals
-        map.addSource('impact-zone', {
-          type: 'geojson',
-          data: impactZoneGeoJSON
-        })
+        try {
+          // Add realistic impact zone with enhanced visuals
+          map.addSource('impact-zone', {
+            type: 'geojson',
+            data: impactZoneGeoJSON
+          })
 
-        map.addLayer({
-          id: 'impact-zone-circle',
-          type: 'circle',
-          source: 'impact-zone',
-          paint: {
-            'circle-radius': {
-              property: 'radius',
-              type: 'identity'
-            },
-            'circle-color': [
-              'interpolate',
-              ['linear'],
-              ['get', 'radius'],
-              0, '#ff6b35',
-              5000, '#f7931e',
-              15000, '#ff4444',
-              30000, '#ff6666',
-              50000, '#ff8888'
-            ],
-            'circle-opacity': [
-              'interpolate',
-              ['linear'],
-              ['zoom'],
-              6, 0.15,
-              10, 0.25,
-              14, 0.35,
-              18, 0.45
-            ],
-            'circle-stroke-color': '#ff6b35',
-            'circle-stroke-opacity': [
-              'interpolate',
-              ['linear'],
-              ['zoom'],
-              6, 0.6,
-              10, 0.7,
-              14, 0.8,
-              18, 0.9
-            ],
-            'circle-stroke-width': [
-              'interpolate',
-              ['linear'],
-              ['zoom'],
-              6, 1,
-              10, 2,
-              14, 3,
-              18, 4
-            ]
-          }
-        })
+          map.addLayer({
+            id: 'impact-zone-circle',
+            type: 'circle',
+            source: 'impact-zone',
+            paint: {
+              'circle-radius': {
+                property: 'radius',
+                type: 'identity'
+              },
+              'circle-color': [
+                'interpolate',
+                ['linear'],
+                ['get', 'radius'],
+                0, '#ff6b35',
+                5000, '#f7931e',
+                15000, '#ff4444',
+                30000, '#ff6666',
+                50000, '#ff8888'
+              ],
+              'circle-opacity': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                6, 0.15,
+                10, 0.25,
+                14, 0.35,
+                18, 0.45
+              ],
+              'circle-stroke-color': '#ff6b35',
+              'circle-stroke-opacity': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                6, 0.6,
+                10, 0.7,
+                14, 0.8,
+                18, 0.9
+              ],
+              'circle-stroke-width': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                6, 1,
+                10, 2,
+                14, 3,
+                18, 4
+              ]
+            }
+          })
+        } catch (error: any) {
+          console.warn('Error adding impact zone:', error)
+        }
 
         // Add animated ripple effect for impact zone
         map.addLayer({
@@ -422,24 +512,31 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
         setMapInstance(map)
       })
 
-      map.on('error', (error) => {
+      map.on('error', (error: any) => {
         console.error('MapLibre GL JS error:', error)
         setMapLoaded(true)
       })
 
+      // Store map instance for cleanup
+      setMapInstance(map)
+
       // Cleanup function
       return () => {
-        if (map) {
-          map.remove()
+        try {
+          if (map && !map._removed) {
+            map.remove()
+          }
+      } catch (error: any) {
+        console.warn('Error during map cleanup:', error)
         }
         setMapInstance(null)
       }
 
-    } catch (error) {
-      console.error('Error initializing MapLibre GL JS map:', error)
+      } catch (error: any) {
+        console.error('Error initializing MapLibre GL JS map:', error)
       setMapLoaded(true) // Still show the component even if map fails
     }
-  }, [impactPrediction])
+  }, [impactPrediction, mapInstance, isClient, maplibreLoaded])
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen)
@@ -447,37 +544,96 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
 
   const zoomIn = () => {
     const map = mapInstance || (mapRef.current as any)?.maplibreMap
-    if (map) {
-      const currentZoom = map.getZoom()
-      map.zoomTo(currentZoom + 1, { duration: 300 })
+    if (map && !map._removed) {
+      try {
+        const currentZoom = map.getZoom()
+        map.zoomTo(currentZoom + 1, { duration: 300 })
+      } catch (error: any) {
+        console.warn('Error zooming in:', error)
+      }
     }
   }
 
   const zoomOut = () => {
     const map = mapInstance || (mapRef.current as any)?.maplibreMap
-    if (map) {
-      const currentZoom = map.getZoom()
-      map.zoomTo(currentZoom - 1, { duration: 300 })
+    if (map && !map._removed) {
+      try {
+        const currentZoom = map.getZoom()
+        map.zoomTo(currentZoom - 1, { duration: 300 })
+      } catch (error: any) {
+        console.warn('Error zooming out:', error)
+      }
     }
   }
 
   const resetView = () => {
     const map = mapInstance || (mapRef.current as any)?.maplibreMap
-    if (map && impactPrediction) {
-      map.flyTo({
-        center: [impactPrediction.impactLocation.longitude, impactPrediction.impactLocation.latitude],
-        zoom: 8,
-        duration: 1000
-      })
+    if (map && !map._removed && impactPrediction) {
+      try {
+        map.flyTo({
+          center: [impactPrediction.impactLocation.longitude, impactPrediction.impactLocation.latitude],
+          zoom: 8,
+          duration: 1000
+        })
+      } catch (error: any) {
+        console.warn('Error resetting view:', error)
+      }
     }
   }
 
+  // Server-side rendering fallback
+  if (!isClient) {
+    return (
+      <div className={`bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 shadow-lg glow-blue ${className}`}>
+        <div className="text-center py-8">
+          <div className="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-cyan-400 text-lg">Loading impact map...</p>
+        </div>
+      </div>
+    )
+  }
+
   if (!impactPrediction) {
+    // Check if asteroid is non-hazardous
+    if (!asteroid.isHazardous) {
+      return (
+        <div className={`bg-black/40 backdrop-blur-sm border border-green-500/30 rounded-xl p-6 shadow-lg glow-green ${className}`}>
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="p-2 bg-gradient-to-r from-green-500 to-green-600 rounded-lg">
+              <Shield className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white">No Impact Risk</h3>
+              <p className="text-gray-400 text-sm">Asteroid: {asteroid.name}</p>
+            </div>
+          </div>
+          <div className="text-gray-300 text-sm space-y-2">
+            <p>This asteroid has been classified as non-hazardous and poses no significant risk of impact with Earth.</p>
+            <p>The object's orbital parameters indicate a safe trajectory that will not bring it into dangerous proximity to our planet.</p>
+            <p>No impact prediction analysis is required for this object.</p>
+          </div>
+        </div>
+      )
+    }
+    
+    // Loading state for hazardous asteroids
     return (
       <div className={`bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 shadow-lg glow-blue ${className}`}>
         <div className="text-center py-8">
           <div className="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-cyan-400 text-lg">Calculating impact prediction...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show loading while MapLibre is loading
+  if (!maplibreLoaded) {
+    return (
+      <div className={`bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 shadow-lg glow-blue ${className}`}>
+        <div className="text-center py-8">
+          <div className="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-cyan-400 text-lg">Loading map engine...</p>
         </div>
       </div>
     )
@@ -603,19 +759,19 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
                     </div>
 
                     {/* Map Style Toggle - Enhanced for realistic Earth views */}
-                    {mapInstance && mapInstance.getLayer('satellite-layer') && mapInstance.getLayer('topographic-overlay') && (
+                    {mapInstance && !mapInstance._removed && mapInstance.getLayer('satellite-layer') && mapInstance.getLayer('topographic-overlay') && (
                       <div className="bg-gradient-to-br from-black/90 to-gray-900/90 backdrop-blur-md border border-cyan-500/40 rounded-xl p-2">
                         <div className="text-xs text-cyan-400 text-center mb-2 font-medium">Map Style</div>
                         <div className="flex space-x-1">
                           <button
                             onClick={() => {
                               const map = mapInstance
-                              if (map && map.getLayer('satellite-layer') && map.getLayer('topographic-overlay')) {
+                              if (map && !map._removed && map.getLayer('satellite-layer') && map.getLayer('topographic-overlay')) {
                                 try {
                                   map.setPaintProperty('satellite-layer', 'raster-opacity', 0.9)
                                   map.setPaintProperty('topographic-overlay', 'raster-opacity', 0.1)
                                   map.setPaintProperty('terrain-overlay', 'raster-opacity', 0.1)
-                                } catch (error) {
+                                } catch (error: any) {
                                   console.warn('Failed to set satellite view:', error)
                                 }
                               }
@@ -628,12 +784,12 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
                           <button
                             onClick={() => {
                               const map = mapInstance
-                              if (map && map.getLayer('satellite-layer') && map.getLayer('topographic-overlay')) {
+                              if (map && !map._removed && map.getLayer('satellite-layer') && map.getLayer('topographic-overlay')) {
                                 try {
                                   map.setPaintProperty('satellite-layer', 'raster-opacity', 0.3)
                                   map.setPaintProperty('topographic-overlay', 'raster-opacity', 0.8)
                                   map.setPaintProperty('terrain-overlay', 'raster-opacity', 0.5)
-                                } catch (error) {
+                                } catch (error: any) {
                                   console.warn('Failed to set topographic view:', error)
                                 }
                               }
@@ -646,12 +802,12 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
                           <button
                             onClick={() => {
                               const map = mapInstance
-                              if (map && map.getLayer('satellite-layer') && map.getLayer('topographic-overlay')) {
+                              if (map && !map._removed && map.getLayer('satellite-layer') && map.getLayer('topographic-overlay')) {
                                 try {
                                   map.setPaintProperty('satellite-layer', 'raster-opacity', 0.6)
                                   map.setPaintProperty('topographic-overlay', 'raster-opacity', 0.4)
                                   map.setPaintProperty('terrain-overlay', 'raster-opacity', 0.3)
-                                } catch (error) {
+                                } catch (error: any) {
                                   console.warn('Failed to set hybrid view:', error)
                                 }
                               }

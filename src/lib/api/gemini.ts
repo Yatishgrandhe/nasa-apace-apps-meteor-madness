@@ -28,6 +28,30 @@ export interface SingleObjectAnalysisRequest {
   eccentricity?: string
 }
 
+// Summarized data structure for efficient AI processing
+export interface SummarizedAsteroidData {
+  name: string
+  type: 'asteroid' | 'comet'
+  size: string // e.g., "small", "medium", "large"
+  avgDiameter: number
+  riskLevel: 'low' | 'medium' | 'high' | 'critical'
+  approach: {
+    distance: string // e.g., "very close", "close", "distant"
+    missDistanceAU: number
+    velocity: number
+    date: string
+  }
+  orbital: {
+    class: string
+    period?: string
+    inclination?: string
+  }
+  scientific: {
+    magnitude?: number
+    hazardous: boolean
+  }
+}
+
 export interface GeminiAnalysisResponse {
   analysis: string
   riskLevel: 'low' | 'medium' | 'high' | 'critical'
@@ -87,8 +111,19 @@ export async function analyzeImpactWithGemini(data: GeminiAnalysisRequest): Prom
       return generateMockAnalysis(data)
     }
 
-    // Real AI analysis API call
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+    // Summarize objects for efficient processing
+    const summary = data.objects.map(obj => {
+      const size = obj.diameter < 100 ? 'small' : obj.diameter < 1000 ? 'medium' : 'large'
+      const distance = obj.missDistance < 0.01 ? 'very close' : obj.missDistance < 0.05 ? 'close' : 'distant'
+      const risk = obj.isHazardous && obj.missDistance < 0.01 ? 'critical' : 
+                  obj.isHazardous && obj.missDistance < 0.05 ? 'high' : 
+                  obj.isHazardous ? 'medium' : 'low'
+      
+      return `${obj.name}: ${size} ${obj.diameter}m, ${distance} ${obj.missDistance}AU, ${risk} risk, ${obj.velocity}km/s, ${obj.approachDate}`
+    }).join('\n')
+
+    // Real AI analysis API call with summarized data
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -96,20 +131,27 @@ export async function analyzeImpactWithGemini(data: GeminiAnalysisRequest): Prom
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `Analyze the following Near Earth Objects for impact risk:
+            text: `Analyze Near Earth Objects for impact risk:
 
-${data.objects.map(obj => 
-  `- ${obj.name}: Diameter ${obj.diameter}m, Velocity ${obj.velocity}km/s, Miss Distance ${obj.missDistance}AU, Approach Date ${obj.approachDate}, Hazardous: ${obj.isHazardous}`
-).join('\n')}
+OBJECTS (${data.objects.length} total):
+${summary}
 
-Provide a detailed risk assessment, recommendations, and identify the most critical objects requiring immediate attention.`
+IMPORTANT: Respond with plain text only. Do NOT use markdown formatting, headers, bullet points, or any special characters. Write in clear, readable paragraphs.
+
+Provide:
+1. Risk Assessment - Overall threat level and critical objects
+2. Priority Objects - Most dangerous requiring immediate attention
+3. Monitoring Recommendations - Enhanced tracking needs
+4. Global Coordination - International response requirements
+
+Focus on actionable insights and clear prioritization. Write in professional language without formatting symbols.`
           }]
         }],
         generationConfig: {
-          temperature: 0.1,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 2048,
+          temperature: 0.2,
+          topK: 32,
+          topP: 0.9,
+          maxOutputTokens: 1536,
         }
       })
     })
@@ -152,6 +194,56 @@ Provide a detailed risk assessment, recommendations, and identify the most criti
   }
 }
 
+// Helper function to summarize asteroid data for efficient AI processing
+function summarizeAsteroidData(data: SingleObjectAnalysisRequest): SummarizedAsteroidData {
+  const avgDiameter = (data.diameter.min + data.diameter.max) / 2
+  
+  // Determine size category
+  let size: string
+  if (avgDiameter < 100) size = 'small'
+  else if (avgDiameter < 1000) size = 'medium'
+  else size = 'large'
+  
+  // Determine approach distance category
+  let distance: string
+  if (data.missDistance < 0.01) distance = 'very close'
+  else if (data.missDistance < 0.05) distance = 'close'
+  else distance = 'distant'
+  
+  // Determine risk level
+  let riskLevel: 'low' | 'medium' | 'high' | 'critical' = 'low'
+  if (data.isHazardous && data.missDistance < 0.01 && avgDiameter > 1000) {
+    riskLevel = 'critical'
+  } else if (data.isHazardous && (data.missDistance < 0.05 || avgDiameter > 1000)) {
+    riskLevel = 'high'
+  } else if (data.isHazardous || data.missDistance < 0.05) {
+    riskLevel = 'medium'
+  }
+  
+  return {
+    name: data.name,
+    type: data.type,
+    size,
+    avgDiameter: Math.round(avgDiameter),
+    riskLevel,
+    approach: {
+      distance,
+      missDistanceAU: data.missDistance,
+      velocity: data.velocity,
+      date: data.approachDate
+    },
+    orbital: {
+      class: data.orbitClass || 'Unknown',
+      period: data.orbitalPeriod,
+      inclination: data.inclination
+    },
+    scientific: {
+      magnitude: data.magnitude,
+      hazardous: data.isHazardous
+    }
+  }
+}
+
 export async function analyzeSingleObjectWithGemini(data: SingleObjectAnalysisRequest): Promise<GeminiAnalysisResponse> {
   try {
     // Check if we have an AI analysis API key
@@ -162,8 +254,11 @@ export async function analyzeSingleObjectWithGemini(data: SingleObjectAnalysisRe
       return generateSingleObjectMockAnalysis(data)
     }
 
-    // Real AI analysis API call for single object
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+    // Summarize data to reduce token usage
+    const summary = summarizeAsteroidData(data)
+
+    // Real AI analysis API call with summarized data
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -171,38 +266,39 @@ export async function analyzeSingleObjectWithGemini(data: SingleObjectAnalysisRe
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `Analyze this ${data.type} for detailed impact risk assessment:
+            text: `Analyze this ${summary.type} for impact risk assessment:
 
-OBJECT: ${data.name}
-TYPE: ${data.type.toUpperCase()}
-DIAMETER: ${data.diameter.min}-${data.diameter.max} meters
-VELOCITY: ${data.velocity} km/s
-MISS DISTANCE: ${data.missDistance} AU
-APPROACH DATE: ${data.approachDate}
-HAZARDOUS: ${data.isHazardous}
-${data.orbitClass ? `ORBIT CLASS: ${data.orbitClass}` : ''}
-${data.magnitude ? `MAGNITUDE: ${data.magnitude}` : ''}
-${data.orbitalPeriod ? `ORBITAL PERIOD: ${data.orbitalPeriod} years` : ''}
-${data.inclination ? `INCLINATION: ${data.inclination}°` : ''}
-${data.eccentricity ? `ECCENTRICITY: ${data.eccentricity}` : ''}
+SUMMARY:
+- Name: ${summary.name}
+- Type: ${summary.type.toUpperCase()}
+- Size: ${summary.size} (${summary.avgDiameter}m avg diameter)
+- Risk Level: ${summary.riskLevel.toUpperCase()}
+- Approach: ${summary.approach.distance} (${summary.approach.missDistanceAU.toFixed(4)} AU)
+- Velocity: ${summary.approach.velocity} km/s
+- Date: ${summary.approach.date}
+- Orbit Class: ${summary.orbital.class}
+- Hazardous: ${summary.scientific.hazardous}
+${summary.orbital.period ? `- Orbital Period: ${summary.orbital.period} years` : ''}
+${summary.orbital.inclination ? `- Inclination: ${summary.orbital.inclination}°` : ''}
+${summary.scientific.magnitude ? `- Magnitude: ${summary.scientific.magnitude}` : ''}
 
-Provide a comprehensive analysis including:
-1. Risk assessment and threat level
-2. Potential impact scenarios
-3. Orbital characteristics analysis
-4. Historical context and comparison
-5. Monitoring recommendations
-6. Future approach predictions
-7. Scientific significance
+IMPORTANT: Respond with plain text only. Do NOT use markdown formatting, headers, bullet points, or any special characters. Write in clear, readable paragraphs.
 
-Format the response in clear sections with actionable insights. Use proper markdown formatting with headers and bullet points for better readability.`
+Provide analysis covering:
+1. Risk Assessment - Threat level and impact probability
+2. Orbital Analysis - Trajectory characteristics and stability  
+3. Scientific Significance - Research value and observations
+4. Monitoring Recommendations - Tracking and observation needs
+5. Future Predictions - Long-term trajectory and approaches
+
+Write in clear, professional language without any formatting symbols.`
           }]
         }],
         generationConfig: {
-          temperature: 0.2,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 3072,
+          temperature: 0.3,
+          topK: 32,
+          topP: 0.9,
+          maxOutputTokens: 2048,
         }
       })
     })
@@ -263,28 +359,28 @@ function generateMockAnalysis(data: GeminiAnalysisRequest): GeminiAnalysisRespon
 Generated: ${new Date().toLocaleString()}
 
 EXECUTIVE SUMMARY:
-- Total objects analyzed: ${data.objects.length}
-- Hazardous objects identified: ${hazardousCount}
-- Risk level: ${riskLevel.toUpperCase()}
-- Closest approach: ${closestApproach.toFixed(4)} AU
+Total objects analyzed: ${data.objects.length}
+Hazardous objects identified: ${hazardousCount}
+Risk level: ${riskLevel.toUpperCase()}
+Closest approach: ${closestApproach.toFixed(4)} AU
 
 DETAILED ANALYSIS:
-1. CLOSEST APPROACH: ${data.objects.find(obj => obj.missDistance === closestApproach)?.name} will approach within ${closestApproach.toFixed(4)} AU
-2. VELOCITY ANALYSIS: Average approach velocity is ${avgVelocity.toFixed(1)} km/s
-3. SIZE DISTRIBUTION: Objects range from ${Math.min(...data.objects.map(obj => obj.diameter))}m to ${Math.max(...data.objects.map(obj => obj.diameter))}m in diameter
-4. HAZARD ASSESSMENT: ${hazardousCount} objects pose potential risk to Earth
+CLOSEST APPROACH: ${data.objects.find(obj => obj.missDistance === closestApproach)?.name} will approach within ${closestApproach.toFixed(4)} AU
+VELOCITY ANALYSIS: Average approach velocity is ${avgVelocity.toFixed(1)} km/s
+SIZE DISTRIBUTION: Objects range from ${Math.min(...data.objects.map(obj => obj.diameter))}m to ${Math.max(...data.objects.map(obj => obj.diameter))}m in diameter
+HAZARD ASSESSMENT: ${hazardousCount} objects pose potential risk to Earth
 
 RECOMMENDATIONS:
-${hazardousCount > 0 ? '- Enhanced tracking required for hazardous objects' : '- Continue routine monitoring'}${closestApproach < 0.01 ? '\n- Immediate attention required for very close approaches' : ''}
-- Regular orbital updates recommended
-- Coordinate with international space agencies
-- Maintain continuous monitoring of high-risk objects
+${hazardousCount > 0 ? 'Enhanced tracking required for hazardous objects' : 'Continue routine monitoring'}${closestApproach < 0.01 ? '\nImmediate attention required for very close approaches' : ''}
+Regular orbital updates recommended
+Coordinate with international space agencies
+Maintain continuous monitoring of high-risk objects
 
 RISK MITIGATION:
-- Deploy additional tracking resources
-- Calculate precise orbital trajectories
-- Develop contingency plans for high-risk scenarios
-- Share data with global monitoring networks
+Deploy additional tracking resources
+Calculate precise orbital trajectories
+Develop contingency plans for high-risk scenarios
+Share data with global monitoring networks
 
 This analysis was generated using advanced AI models to assess potential impact risks and provide actionable recommendations for space object monitoring.`
 
@@ -334,53 +430,53 @@ function generateSingleObjectMockAnalysis(data: SingleObjectAnalysisRequest): Ge
 Generated: ${new Date().toLocaleString()}
 
 EXECUTIVE SUMMARY:
-- Object: ${data.name}
-- Type: ${data.type.toUpperCase()}
-- Risk Level: ${riskLevel.toUpperCase()}
-- Average Diameter: ${avgDiameter.toFixed(0)} meters
-- Approach Distance: ${data.missDistance.toFixed(6)} AU
-- Approach Velocity: ${data.velocity.toFixed(2)} km/s
+Object: ${data.name}
+Type: ${data.type.toUpperCase()}
+Risk Level: ${riskLevel.toUpperCase()}
+Average Diameter: ${avgDiameter.toFixed(0)} meters
+Approach Distance: ${data.missDistance.toFixed(6)} AU
+Approach Velocity: ${data.velocity.toFixed(2)} km/s
 
 DETAILED ANALYSIS:
 
-1. PHYSICAL CHARACTERISTICS:
-   - Size Range: ${data.diameter.min}-${data.diameter.max} meters
-   - Average Size: ${avgDiameter.toFixed(0)} meters
-   - Magnitude: ${data.magnitude || 'N/A'}
-   - Classification: ${data.isHazardous ? 'Potentially Hazardous' : 'Non-Hazardous'}
+PHYSICAL CHARACTERISTICS:
+Size Range: ${data.diameter.min}-${data.diameter.max} meters
+Average Size: ${avgDiameter.toFixed(0)} meters
+Magnitude: ${data.magnitude || 'N/A'}
+Classification: ${data.isHazardous ? 'Potentially Hazardous' : 'Non-Hazardous'}
 
-2. ORBITAL PARAMETERS:
-   - Miss Distance: ${data.missDistance.toFixed(6)} AU (${(data.missDistance * 149.6).toFixed(2)} million km)
-   - Approach Velocity: ${data.velocity.toFixed(2)} km/s
-   - Approach Date: ${data.approachDate}
-   ${data.orbitClass ? `- Orbit Class: ${data.orbitClass}` : ''}
-   ${data.orbitalPeriod ? `- Orbital Period: ${data.orbitalPeriod} years` : ''}
-   ${data.inclination ? `- Inclination: ${data.inclination}°` : ''}
-   ${data.eccentricity ? `- Eccentricity: ${data.eccentricity}` : ''}
+ORBITAL PARAMETERS:
+Miss Distance: ${data.missDistance.toFixed(6)} AU (${(data.missDistance * 149.6).toFixed(2)} million km)
+Approach Velocity: ${data.velocity.toFixed(2)} km/s
+Approach Date: ${data.approachDate}
+${data.orbitClass ? `Orbit Class: ${data.orbitClass}` : ''}
+${data.orbitalPeriod ? `Orbital Period: ${data.orbitalPeriod} years` : ''}
+${data.inclination ? `Inclination: ${data.inclination}°` : ''}
+${data.eccentricity ? `Eccentricity: ${data.eccentricity}` : ''}
 
-3. RISK ASSESSMENT:
-   - Threat Level: ${riskLevel.toUpperCase()}
-   - Hazard Classification: ${data.isHazardous ? 'Potentially Hazardous' : 'Non-Hazardous'}
-   - Size Impact: ${isLarge ? 'Large object - significant impact potential' : 'Small to medium object'}
-   - Approach Proximity: ${isVeryClose ? 'Very close approach - requires monitoring' : 'Distant approach'}
+RISK ASSESSMENT:
+Threat Level: ${riskLevel.toUpperCase()}
+Hazard Classification: ${data.isHazardous ? 'Potentially Hazardous' : 'Non-Hazardous'}
+Size Impact: ${isLarge ? 'Large object - significant impact potential' : 'Small to medium object'}
+Approach Proximity: ${isVeryClose ? 'Very close approach - requires monitoring' : 'Distant approach'}
 
-4. SCIENTIFIC SIGNIFICANCE:
-   - This ${data.type} provides valuable data for understanding solar system dynamics
-   - Orbital parameters contribute to asteroid/comet population studies
-   - Close approach offers opportunity for radar observations
-   - Physical characteristics help refine size distribution models
+SCIENTIFIC SIGNIFICANCE:
+This ${data.type} provides valuable data for understanding solar system dynamics
+Orbital parameters contribute to asteroid/comet population studies
+Close approach offers opportunity for radar observations
+Physical characteristics help refine size distribution models
 
-5. MONITORING RECOMMENDATIONS:
-   - ${isVeryClose ? 'Enhanced tracking required due to close approach' : 'Routine monitoring sufficient'}
-   - ${isLarge ? 'Radar observations recommended for size verification' : 'Optical observations adequate'}
-   - ${data.isHazardous ? 'Priority monitoring due to hazardous classification' : 'Standard monitoring protocol'}
-   - Coordinate with international observation networks
+MONITORING RECOMMENDATIONS:
+${isVeryClose ? 'Enhanced tracking required due to close approach' : 'Routine monitoring sufficient'}
+${isLarge ? 'Radar observations recommended for size verification' : 'Optical observations adequate'}
+${data.isHazardous ? 'Priority monitoring due to hazardous classification' : 'Standard monitoring protocol'}
+Coordinate with international observation networks
 
-6. FUTURE PREDICTIONS:
-   - Monitor for potential orbital perturbations
-   - Track for future close approaches
-   - Update orbital elements post-encounter
-   - Assess long-term trajectory stability
+FUTURE PREDICTIONS:
+Monitor for potential orbital perturbations
+Track for future close approaches
+Update orbital elements post-encounter
+Assess long-term trajectory stability
 
 This analysis was generated using advanced AI models and NASA observational data to provide comprehensive risk assessment and scientific insights.`
 
@@ -424,8 +520,16 @@ export async function getMitigationStrategiesWithGemini(data: MitigationStrategy
       return generateMockMitigationStrategies(data)
     }
 
+    // Summarize data for mitigation strategies
+    const avgDiameter = (data.diameter.min + data.diameter.max) / 2
+    const size = avgDiameter < 100 ? 'small' : avgDiameter < 1000 ? 'medium' : 'large'
+    const approach = data.missDistance < 0.01 ? 'very close' : data.missDistance < 0.05 ? 'close' : 'distant'
+    const risk = data.isHazardous && data.missDistance < 0.01 ? 'critical' : 
+                data.isHazardous && data.missDistance < 0.05 ? 'high' : 
+                data.isHazardous ? 'medium' : 'low'
+
     // Real AI analysis API call for mitigation strategies
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -433,69 +537,58 @@ export async function getMitigationStrategiesWithGemini(data: MitigationStrategy
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `Provide mitigation strategies for asteroid ${data.name}:
+            text: `Provide mitigation strategies for ${data.name}:
 
-BASIC DATA:
+SUMMARY:
 - Type: ${data.type.toUpperCase()}
-- Size: ${data.diameter.min}-${data.diameter.max}m
-- Speed: ${data.velocity} km/s
-- Distance: ${data.missDistance} AU
+- Size: ${size} (${Math.round(avgDiameter)}m average)
+- Approach: ${approach} (${data.missDistance} AU)
+- Velocity: ${data.velocity} km/s
+- Risk Level: ${risk.toUpperCase()}
 - Hazardous: ${data.isHazardous}
-${data.impactProbability ? `- Impact Risk: ${data.impactProbability}` : ''}
+${data.impactProbability ? `- Impact Probability: ${data.impactProbability}` : ''}
 
 CRITICAL INSTRUCTIONS:
-1. Respond with ONLY valid JSON - no markdown, no code blocks, no explanations
+1. Respond with ONLY valid JSON - no markdown, no explanations, no text before or after
 2. Start your response with { and end with }
 3. Ensure all strings are properly escaped
 4. No trailing commas
 5. No text before or after the JSON
 
-Required JSON format:
+REQUIRED JSON FORMAT:
 {
   "strategies": [
     {
       "category": "Detection & Tracking",
-      "title": "Enhanced Monitoring",
-      "description": "Detailed description of the strategy",
+      "title": "Strategy Name",
+      "description": "2-3 sentence description",
       "feasibility": "high",
-      "timeframe": "Implementation timeframe",
-      "effectiveness": "Expected effectiveness percentage",
+      "timeframe": "Implementation time",
+      "effectiveness": "95%",
       "requirements": ["requirement1", "requirement2"],
-      "estimatedCost": "Cost estimate if available"
+      "estimatedCost": "Cost estimate"
     }
   ],
   "timeline": [
     {
-      "phase": "Phase name",
+      "phase": "Phase Name",
       "duration": "Duration",
       "description": "What happens in this phase",
       "priority": "high"
     }
   ],
-  "globalCoordination": [
-    "Coordination requirement 1",
-    "Coordination requirement 2"
-  ],
-  "publicPreparedness": [
-    "Public preparedness measure 1",
-    "Public preparedness measure 2"
-  ]
+  "globalCoordination": ["coordination item 1", "item 2"],
+  "publicPreparedness": ["preparedness item 1", "item 2"]
 }
 
-Include 3-4 main strategies:
-1. Detection & Tracking
-2. Kinetic Impactor (DART-style)
-3. Civil Defense
-4. International Coordination
-
-Keep descriptions concise (2-3 sentences each).`
+Include exactly 4 strategies: Detection & Tracking, Kinetic Impactor, Civil Defense, International Coordination.`
           }]
         }],
         generationConfig: {
-          temperature: 0.2,
+          temperature: 0.3,
           topK: 20,
           topP: 0.8,
-          maxOutputTokens: 2048,
+          maxOutputTokens: 1536,
         }
       })
     })

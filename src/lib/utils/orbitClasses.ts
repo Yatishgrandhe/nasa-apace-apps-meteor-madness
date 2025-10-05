@@ -113,8 +113,8 @@ export function getOrbitClassInfo(orbitClass: string): OrbitClassInfo {
     'JFC': 'Jupiter Family'
   }
   
-  // Ensure orbitClass is a string and handle null/undefined values
-  if (!orbitClass || typeof orbitClass !== 'string') {
+  // Ensure orbitClass is a string and handle null/undefined/empty values
+  if (!orbitClass || typeof orbitClass !== 'string' || orbitClass.trim() === '') {
     return ORBIT_CLASSES['Unknown']
   }
   

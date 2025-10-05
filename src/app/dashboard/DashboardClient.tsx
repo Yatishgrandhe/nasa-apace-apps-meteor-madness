@@ -1,17 +1,19 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Zap, Shield, Target, TrendingUp, Globe, Activity } from 'lucide-react'
+import { Zap, Shield, Target, TrendingUp, Globe, ArrowLeft } from 'lucide-react'
 import AIResponse from '@/components/AIResponse'
 import { fetchNEOData, fetchCometData, transformNEOData, transformCometData, type NEOObject, type CometObject } from '@/lib/api/neo'
 import { analyzeImpactWithGemini } from '@/lib/api/gemini'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 interface DashboardClientProps {
   // Empty interface for future props
 }
 
 export default function DashboardClient({}: DashboardClientProps) {
+  const router = useRouter()
   const [neoData, setNeoData] = useState<NEOObject[]>([])
   const [cometData, setCometData] = useState<CometObject[]>([])
   const [loading, setLoading] = useState(true)
@@ -112,6 +114,25 @@ export default function DashboardClient({}: DashboardClientProps) {
   const cometsCount = cometData.length
   const closestApproach = Math.min(...[...neoData, ...cometData].map(obj => obj.missDistance))
   
+  const handleStatClick = (statTitle: string) => {
+    switch (statTitle) {
+      case 'Objects Monitored':
+        router.push('/neo')
+        break
+      case 'Hazardous Objects':
+        router.push('/search')
+        break
+      case 'Closest Approach':
+        router.push('/solar-system')
+        break
+      case 'Data Status':
+        router.push('/')
+        break
+      default:
+        break
+    }
+  }
+
   const stats = [
     {
       title: 'Objects Monitored',
@@ -195,9 +216,23 @@ export default function DashboardClient({}: DashboardClientProps) {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ duration: 0.6, delay: 0.4 + index * 0.1 }}
                 whileHover={{ scale: 1.05, y: -5 }}
-                className="bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 hover:shadow-2xl transition-all duration-300 shadow-lg glow-blue"
+                whileTap={{ scale: 0.98 }}
+                onClick={() => handleStatClick(stat.title)}
+                className="bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-xl sm:rounded-2xl p-8 sm:p-10 lg:p-12 hover:shadow-2xl transition-all duration-300 shadow-lg glow-blue cursor-pointer relative group"
               >
-                <div className="flex items-center justify-between mb-6">
+                {/* Back button - appears on hover */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  whileHover={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                >
+                  <div className="flex items-center justify-center w-8 h-8 bg-cyan-500/20 border border-cyan-500/40 rounded-lg hover:bg-cyan-500/30 transition-colors duration-200">
+                    <ArrowLeft className="w-4 h-4 text-cyan-400" />
+                  </div>
+                </motion.div>
+                
+                <div className="flex items-center justify-center mb-6">
                   <motion.div 
                     className={`p-4 rounded-xl bg-gradient-to-r ${stat.color} shadow-lg`}
                     whileHover={{ rotate: 5 }}
@@ -205,7 +240,6 @@ export default function DashboardClient({}: DashboardClientProps) {
                   >
                     <stat.icon className="w-8 h-8 text-white" />
                   </motion.div>
-                  <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">{stat.change}</span>
                 </div>
                 <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-2">{stat.value}</h3>
                 <p className="text-xs sm:text-sm lg:text-base text-gray-300 font-medium">{stat.title}</p>
@@ -218,89 +252,14 @@ export default function DashboardClient({}: DashboardClientProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
-            className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8"
+            className="grid grid-cols-1 gap-6 lg:gap-8"
           >
-            {/* Recent Activity */}
-            <motion.div
-              initial={{ opacity: 0, x: -20, scale: 0.95 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-              whileHover={{ scale: 1.02 }}
-              className="bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 glow-blue"
-            >
-              <div className="flex items-center justify-between mb-8">
-                <motion.h2 
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.8 }}
-                  className="text-xl sm:text-2xl lg:text-3xl font-bold text-white"
-                >
-                  Recent Activity
-                </motion.h2>
-                <motion.div
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ delay: 1, type: "spring", stiffness: 200 }}
-                  className="p-3 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-xl shadow-lg glow-blue"
-                >
-                  <Activity className="w-6 h-6 text-white" />
-                </motion.div>
-              </div>
-              
-              <div className="space-y-4">
-                {(() => {
-                  const combinedData = [...neoData, ...cometData]
-                  const recentObjects = combinedData
-                    .sort((a, b) => new Date(b.approachDate).getTime() - new Date(a.approachDate).getTime())
-                    .slice(0, 5)
-                    
-                  return recentObjects.map((obj, index) => {
-                    // Use deterministic time calculation based on object properties to avoid hydration mismatch
-                    const timeAgo = Math.floor((obj.name.length + obj.diameter + index) % 60) + 1
-                    const timeUnit = timeAgo === 1 ? 'minute' : 'minutes'
-                    const isHazardous = obj.isHazardous
-                    
-                    return {
-                      action: `${obj.name} approach detected`,
-                      time: `${timeAgo} ${timeUnit} ago`,
-                      type: isHazardous ? 'warning' : 'detection',
-                      object: obj
-                    }
-                  })
-                })().map((activity, activityIndex) => (
-                  <motion.div 
-                    key={activityIndex}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 1 + activityIndex * 0.1 }}
-                    whileHover={{ x: 5 }}
-                    className="bg-gradient-to-r from-gray-900/50 to-cyan-900/30 rounded-xl p-4 border border-cyan-500/20 shadow-sm hover:shadow-md transition-all duration-300"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-2 h-2 rounded-full ${
-                          activity.type === 'detection' ? 'bg-red-400' :
-                          activity.type === 'success' ? 'bg-green-400' :
-                          activity.type === 'warning' ? 'bg-yellow-400' :
-                          'bg-cyan-400'
-                        }`} />
-                        <span className="text-white font-medium">{activity.action}</span>
-                      </div>
-                      <span className="text-gray-400 text-sm">{activity.time}</span>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-
-
-
             {/* AI Risk Assessment Section */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 1.5 }}
-              className="bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-2xl p-8 hover:shadow-2xl transition-all duration-300 shadow-lg glow-blue"
+              transition={{ duration: 0.8, delay: 0.6 }}
+              className="bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-2xl p-10 sm:p-12 lg:p-16 hover:shadow-2xl transition-all duration-300 shadow-lg glow-blue"
             >
               <div className="flex items-center justify-between mb-6">
                 <motion.h2
@@ -336,8 +295,8 @@ export default function DashboardClient({}: DashboardClientProps) {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.7 }}
-                className="bg-gray-900/50 rounded-xl p-6 border border-gray-700/50"
+                transition={{ delay: 0.7 }}
+                className="bg-gray-900/50 rounded-xl p-8 sm:p-10 lg:p-12 border border-gray-700/50"
               >
                 {loading ? (
                   <div className="text-center py-8">
@@ -364,8 +323,8 @@ export default function DashboardClient({}: DashboardClientProps) {
                             <span className="text-cyan-400 font-semibold">Real-Time Assessment</span>
                           </div>
                           <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-gray-800/50 rounded-lg p-4">
-                              <div className="text-sm text-gray-400 mb-1">Risk Level</div>
+                            <div className="bg-gray-800/50 rounded-lg p-6 sm:p-8">
+                              <div className="text-sm text-gray-400 mb-2">Risk Level</div>
                               <div className={`text-2xl font-bold ${
                                 assessment.riskLevel === 'Critical' ? 'text-red-400' :
                                 assessment.riskLevel === 'High' ? 'text-orange-400' :
@@ -375,12 +334,12 @@ export default function DashboardClient({}: DashboardClientProps) {
                                 {assessment.riskLevel}
                               </div>
                             </div>
-                            <div className="bg-gray-800/50 rounded-lg p-4">
-                              <div className="text-sm text-gray-400 mb-1">Hazardous Objects</div>
+                            <div className="bg-gray-800/50 rounded-lg p-6 sm:p-8">
+                              <div className="text-sm text-gray-400 mb-2">Hazardous Objects</div>
                               <div className="text-2xl font-bold text-white">{assessment.hazardousCount}</div>
                             </div>
                           </div>
-                          <div className="bg-gray-800/50 rounded-lg p-4">
+                          <div className="bg-gray-800/50 rounded-lg p-6 sm:p-8">
                             <div className="text-sm text-gray-400 mb-2">Assessment Details</div>
                             <p className="text-gray-300">{assessment.assessment}</p>
                           </div>
