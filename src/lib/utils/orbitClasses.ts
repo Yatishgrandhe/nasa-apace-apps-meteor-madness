@@ -73,8 +73,30 @@ export const ORBIT_CLASSES: Record<string, OrbitClassInfo> = {
 }
 
 export function getOrbitClassInfo(orbitClass: string): OrbitClassInfo {
+  // Map JPL codes to our orbit class names
+  const jplCodeMapping: Record<string, string> = {
+    'APO': 'Apollo',
+    'ATE': 'Aten', 
+    'AMO': 'Amor',
+    'ATI': 'Atira',
+    'LPC': 'Long Period',
+    'SPC': 'Short Period',
+    'HTC': 'Halley-type',
+    'JFC': 'Jupiter Family'
+  }
+  
+  const normalizedClass = orbitClass.toUpperCase()
+  
+  // Check JPL code mappings first
+  if (jplCodeMapping[normalizedClass]) {
+    const mappedName = jplCodeMapping[normalizedClass]
+    if (ORBIT_CLASSES[mappedName]) {
+      return ORBIT_CLASSES[mappedName]
+    }
+  }
+  
   // Handle various formats and cases
-  const normalizedClass = orbitClass
+  const formattedClass = orbitClass
     .replace(/[^a-zA-Z\s]/g, '') // Remove special characters
     .trim()
     .split(' ')
@@ -82,14 +104,14 @@ export function getOrbitClassInfo(orbitClass: string): OrbitClassInfo {
     .join(' ')
 
   // Direct match
-  if (ORBIT_CLASSES[normalizedClass]) {
-    return ORBIT_CLASSES[normalizedClass]
+  if (ORBIT_CLASSES[formattedClass]) {
+    return ORBIT_CLASSES[formattedClass]
   }
 
   // Partial matches
   const matches = Object.keys(ORBIT_CLASSES).filter(key => 
-    key.toLowerCase().includes(normalizedClass.toLowerCase()) ||
-    normalizedClass.toLowerCase().includes(key.toLowerCase())
+    key.toLowerCase().includes(formattedClass.toLowerCase()) ||
+    formattedClass.toLowerCase().includes(key.toLowerCase())
   )
 
   if (matches.length > 0) {

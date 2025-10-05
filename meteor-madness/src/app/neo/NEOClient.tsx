@@ -240,7 +240,7 @@ export default function NEOClient({}: NEOClientProps) {
               transition={{ delay: 0.4, duration: 0.6 }}
               className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-300 bg-clip-text text-transparent mb-4"
             >
-              Near Earth Objects
+              Asteroid Watch
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 10 }}

@@ -29,14 +29,17 @@ export default function Navigation({}: NavigationProps) {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4 lg:space-x-6 xl:space-x-8 2xl:space-x-10">
+            <a href="/" className="text-gray-300 hover:text-cyan-400 transition-colors font-medium text-sm lg:text-base xl:text-lg 2xl:text-xl">
+              Home
+            </a>
             <a href="/dashboard" className="text-gray-300 hover:text-cyan-400 transition-colors font-medium text-sm lg:text-base xl:text-lg 2xl:text-xl">
               Dashboard
             </a>
-            <a href="/missions" className="text-gray-300 hover:text-cyan-400 transition-colors font-medium text-sm lg:text-base xl:text-lg 2xl:text-xl">
-              Missions
-            </a>
             <a href="/neo" className="text-gray-300 hover:text-cyan-400 transition-colors font-medium text-sm lg:text-base xl:text-lg 2xl:text-xl">
-              Near Earth Objects
+              Asteroid Watch
+            </a>
+            <a href="/solar-system" className="text-gray-300 hover:text-cyan-400 transition-colors font-medium text-sm lg:text-base xl:text-lg 2xl:text-xl">
+              Solar System 3D
             </a>
           </div>
 
@@ -61,6 +64,13 @@ export default function Navigation({}: NavigationProps) {
           >
             <div className="px-4 py-2 space-y-1">
               <a 
+                href="/" 
+                className="block text-gray-300 hover:text-cyan-400 py-3 px-2 transition-colors font-medium text-base rounded-lg hover:bg-cyan-500/10"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Home
+              </a>
+              <a 
                 href="/dashboard" 
                 className="block text-gray-300 hover:text-cyan-400 py-3 px-2 transition-colors font-medium text-base rounded-lg hover:bg-cyan-500/10"
                 onClick={() => setIsMenuOpen(false)}
@@ -68,18 +78,18 @@ export default function Navigation({}: NavigationProps) {
                 Dashboard
               </a>
               <a 
-                href="/missions" 
-                className="block text-gray-300 hover:text-cyan-400 py-3 px-2 transition-colors font-medium text-base rounded-lg hover:bg-cyan-500/10"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Missions
-              </a>
-              <a 
                 href="/neo" 
                 className="block text-gray-300 hover:text-cyan-400 py-3 px-2 transition-colors font-medium text-base rounded-lg hover:bg-cyan-500/10"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Near Earth Objects
+                Asteroid Watch
+              </a>
+              <a 
+                href="/solar-system" 
+                className="block text-gray-300 hover:text-cyan-400 py-3 px-2 transition-colors font-medium text-base rounded-lg hover:bg-cyan-500/10"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Solar System 3D
               </a>
             </div>
           </motion.div>
