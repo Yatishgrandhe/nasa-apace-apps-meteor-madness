@@ -42,11 +42,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 - **Fullscreen Mode**: Full-screen map viewing for detailed analysis
 
 ### NASA Eyes Integration
-- **Asteroid Detail Pages**: Auto-loads specific asteroid in NASA Eyes on the Solar System
-- **Comet Detail Pages**: Auto-loads specific comet in NASA Eyes on the Solar System
+- **Asteroid Detail Pages**: Direct link to specific asteroid in NASA Eyes on the Solar System
+- **Comet Detail Pages**: Direct link to specific comet in NASA Eyes on the Solar System
 - **Interactive 3D Visualization**: Real-time orbital mechanics and trajectory visualization
-- **Fullscreen Mode**: Full-screen NASA Eyes experience
-- **External Link**: Open NASA Eyes in new tab for enhanced features
+- **External Link**: Opens NASA Eyes in new tab for full interactive experience
+- **Object-Specific URLs**: Directly navigates to the specific asteroid or comet being viewed
 
 ### Analysis Includes
 - Risk assessment and threat level
@@ -66,13 +66,14 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 - **Geographic Context**: Identifies country and region of potential impact
 
 ### NASA Eyes Features
-- **Auto-Loading**: Automatically loads the specific asteroid or comet being viewed
+- **Direct Navigation**: Direct links to specific asteroids and comets in NASA Eyes
 - **Real-Time Data**: Uses NASA's latest orbital mechanics data
 - **3D Visualization**: Interactive 3D view of the solar system
 - **Orbital Trajectory**: Shows approach path and future positions
 - **Time Controls**: Play, pause, and speed controls for time progression
 - **Multiple Views**: Different camera angles and perspectives
 - **Object Focus**: Automatic focus on the selected asteroid or comet
+- **Full Experience**: Opens in new tab for complete NASA Eyes functionality
 
 ### Fallback Behavior
 If no API key is provided or the API is unavailable, the system will:
@@ -105,8 +106,8 @@ If no API key is provided or the API is unavailable, the system will:
 3. Navigate to any asteroid or comet detail page
 4. AI analysis will automatically load and display
 5. Impact prediction map will show potential impact locations
-6. NASA Eyes iframe will auto-load the specific object in 3D visualization
-7. Use fullscreen mode for detailed map and NASA Eyes analysis
+6. NASA Eyes link will open the specific object in NASA's 3D visualization
+7. Use fullscreen mode for detailed map analysis
 8. Switch between different impact scenarios (nominal, worst-case, best-case)
 9. Interact with NASA Eyes controls for orbital mechanics exploration
 
@@ -120,7 +121,7 @@ If no API key is provided or the API is unavailable, the system will:
 - **Impact prediction shows "No Impact Predicted"**: Asteroid has very low impact probability (< 0.1%)
 - **Fullscreen mode not working**: Check browser permissions for fullscreen API
 - **NASA Eyes not loading**: Check if NASA Eyes is accessible and object ID is valid
-- **Iframe blocked by browser**: Some browsers may block iframes, use external link option
+- **External link not working**: Verify that NASA Eyes website is accessible
 - **Chrome third-party cookies warning**: This is normal and doesn't affect functionality
 
 ### Debug Mode

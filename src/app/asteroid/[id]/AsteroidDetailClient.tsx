@@ -3,12 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Target, AlertTriangle, Clock, TrendingUp, Zap, Shield, Info } from 'lucide-react'
+import { Target, AlertTriangle, Clock, TrendingUp, Zap, Shield, Info, Globe, ExternalLink } from 'lucide-react'
 import StandardLayout from '@/components/StandardLayout'
 import Object3DViewer from '@/components/Object3DViewer'
 import AIResponse from '@/components/AIResponse'
 import ImpactMap from '@/components/ImpactMap'
-import NASAEyesIframe from '@/components/NASAEyesIframe'
 import { getOrbitClassInfo, getOrbitClassColor, getOrbitClassBgColor } from '@/lib/utils/orbitClasses'
 import { analyzeSingleObjectWithGemini, type SingleObjectAnalysisRequest } from '@/lib/api/gemini'
 
@@ -362,14 +361,42 @@ export default function AsteroidDetailClient({ asteroidId }: AsteroidDetailClien
         />
       )}
 
-      {/* NASA Eyes on the Solar System */}
+      {/* NASA Eyes on the Solar System Link */}
       {asteroid && (
-        <NASAEyesIframe
-          objectId={asteroid.id}
-          objectName={asteroid.name}
-          objectType="asteroid"
-          className="mt-8"
-        />
+        <div className="bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 shadow-lg glow-blue mt-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg">
+                <Globe className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white">NASA Eyes on the Solar System</h3>
+                <p className="text-gray-400 text-sm">Explore {asteroid.name} in 3D</p>
+              </div>
+            </div>
+            <a
+              href={`https://eyes.nasa.gov/apps/solar-system/#/asteroids/${asteroid.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg"
+            >
+              <ExternalLink className="w-5 h-5 mr-2" />
+              Open in NASA Eyes
+            </a>
+          </div>
+          <div className="mt-4 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">
+            <div className="flex items-start space-x-2">
+              <Globe className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+              <div className="text-blue-200 text-sm">
+                <div className="font-semibold mb-1">Interactive 3D Visualization</div>
+                <div>
+                  Click "Open in NASA Eyes" to explore {asteroid.name} in NASA's interactive 3D solar system. 
+                  You can view the asteroid's orbit, approach trajectory, and position relative to Earth and other planets.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </StandardLayout>
   )
