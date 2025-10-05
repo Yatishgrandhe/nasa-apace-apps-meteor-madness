@@ -5,7 +5,9 @@ import { motion } from 'framer-motion'
 import { AlertTriangle, Calendar, Target, Zap, Info, Clock, TrendingUp } from 'lucide-react'
 import StandardLayout from '@/components/StandardLayout'
 import Object3DViewer from '@/components/Object3DViewer'
+import AIResponse from '@/components/AIResponse'
 import { getOrbitClassInfo, getOrbitClassColor, getOrbitClassBgColor } from '@/lib/utils/orbitClasses'
+import { analyzeSingleObjectWithGemini, type SingleObjectAnalysisRequest } from '@/lib/api/gemini'
 
 interface CometDetailClientProps {
   cometId: string
@@ -53,6 +55,8 @@ export default function CometDetailClient({ cometId }: CometDetailClientProps) {
   const [comet, setComet] = useState<CometData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [aiAnalysis, setAiAnalysis] = useState<string>('')
+  const [aiLoading, setAiLoading] = useState(false)
 
   useEffect(() => {
     const fetchCometData = async () => {
@@ -79,6 +83,45 @@ export default function CometDetailClient({ cometId }: CometDetailClientProps) {
 
     fetchCometData()
   }, [cometId])
+
+  useEffect(() => {
+    const runAiAnalysis = async () => {
+      if (!comet) return
+      
+      try {
+        setAiLoading(true)
+        const closestApproach = comet.close_approach_data[0]
+        
+        const analysisData: SingleObjectAnalysisRequest = {
+          name: comet.name,
+          type: 'comet',
+          diameter: {
+            min: comet.estimated_diameter.kilometers.estimated_diameter_min * 1000, // Convert to meters
+            max: comet.estimated_diameter.kilometers.estimated_diameter_max * 1000
+          },
+          isHazardous: comet.is_potentially_hazardous_asteroid,
+          missDistance: parseFloat(closestApproach.miss_distance.astronomical),
+          velocity: parseFloat(closestApproach.relative_velocity.kilometers_per_second),
+          approachDate: closestApproach.close_approach_date,
+          orbitClass: comet.orbital_data.orbit_class.orbit_class_type,
+          magnitude: comet.absolute_magnitude_h,
+          orbitalPeriod: comet.orbital_data.orbital_period,
+          inclination: comet.orbital_data.inclination,
+          eccentricity: comet.orbital_data.eccentricity,
+        }
+
+        const result = await analyzeSingleObjectWithGemini(analysisData)
+        setAiAnalysis(result.analysis)
+      } catch (error) {
+        console.error('Error running AI analysis:', error)
+        setAiAnalysis('AI analysis temporarily unavailable. Please try again later.')
+      } finally {
+        setAiLoading(false)
+      }
+    }
+
+    runAiAnalysis()
+  }, [comet])
 
   if (loading) {
     return (
@@ -260,8 +303,36 @@ export default function CometDetailClient({ cometId }: CometDetailClientProps) {
               <div className="text-sm text-gray-400">Velocity (km/s)</div>
             </div>
           </div>
-          </div>
+        </div>
       )}
+
+      {/* AI Analysis Section */}
+      <div className="bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 shadow-lg glow-blue mt-8">
+        <h3 className="text-xl font-semibold text-cyan-400 mb-4 flex items-center space-x-2">
+          <Zap className="w-5 h-5" />
+          <span>AI Analysis</span>
+        </h3>
+        
+        {aiLoading ? (
+          <div className="text-center py-8">
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full mb-4 animate-pulse">
+              <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <p className="text-gray-400">Analyzing comet data with AI...</p>
+          </div>
+        ) : aiAnalysis ? (
+          <AIResponse 
+            content={aiAnalysis} 
+            title="Comet Impact Risk Assessment"
+            type="analysis"
+            className="mb-4"
+          />
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-gray-400">AI analysis will appear here once data is loaded.</p>
+          </div>
+        )}
+      </div>
     </StandardLayout>
   )
 }

@@ -6,7 +6,10 @@ import { motion } from 'framer-motion'
 import { Target, AlertTriangle, Clock, TrendingUp, Zap, Shield, Info } from 'lucide-react'
 import StandardLayout from '@/components/StandardLayout'
 import Object3DViewer from '@/components/Object3DViewer'
+import AIResponse from '@/components/AIResponse'
+import ImpactMap from '@/components/ImpactMap'
 import { getOrbitClassInfo, getOrbitClassColor, getOrbitClassBgColor } from '@/lib/utils/orbitClasses'
+import { analyzeSingleObjectWithGemini, type SingleObjectAnalysisRequest } from '@/lib/api/gemini'
 
 interface AsteroidDetailClientProps {
   asteroidId: string
@@ -58,6 +61,9 @@ export default function AsteroidDetailClient({ asteroidId }: AsteroidDetailClien
   const [asteroid, setAsteroid] = useState<AsteroidDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [aiAnalysis, setAiAnalysis] = useState<string>('')
+  const [aiLoading, setAiLoading] = useState(false)
+  const [asteroidForMap, setAsteroidForMap] = useState<any>(null)
 
   useEffect(() => {
     const fetchAsteroidDetails = async () => {
@@ -71,6 +77,25 @@ export default function AsteroidDetailClient({ asteroidId }: AsteroidDetailClien
         
         const data = await response.json()
         setAsteroid(data.data)
+        
+        // Prepare asteroid data for impact map
+        if (data.data) {
+          const closestApproach = data.data.close_approach_data[0]
+          const mapData = {
+            name: data.data.name,
+            diameter: {
+              min: data.data.estimated_diameter.meters.estimated_diameter_min,
+              max: data.data.estimated_diameter.meters.estimated_diameter_max
+            },
+            velocity: parseFloat(closestApproach.relative_velocity.kilometers_per_second),
+            missDistance: parseFloat(closestApproach.miss_distance.astronomical),
+            isHazardous: data.data.is_potentially_hazardous,
+            approachDate: closestApproach.close_approach_date,
+            inclination: data.data.orbital_data?.inclination,
+            orbitClass: data.data.orbital_data?.orbit_class
+          }
+          setAsteroidForMap(mapData)
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch asteroid details')
       } finally {
@@ -80,6 +105,44 @@ export default function AsteroidDetailClient({ asteroidId }: AsteroidDetailClien
 
     fetchAsteroidDetails()
   }, [asteroidId])
+
+  useEffect(() => {
+    const runAiAnalysis = async () => {
+      if (!asteroid) return
+      
+      try {
+        setAiLoading(true)
+        const closestApproach = asteroid.close_approach_data[0]
+        
+        const analysisData: SingleObjectAnalysisRequest = {
+          name: asteroid.name,
+          type: 'asteroid',
+          diameter: {
+            min: asteroid.estimated_diameter.meters.estimated_diameter_min,
+            max: asteroid.estimated_diameter.meters.estimated_diameter_max
+          },
+          isHazardous: asteroid.is_potentially_hazardous,
+          missDistance: parseFloat(closestApproach.miss_distance.astronomical),
+          velocity: parseFloat(closestApproach.relative_velocity.kilometers_per_second),
+          approachDate: closestApproach.close_approach_date,
+          orbitClass: asteroid.orbital_data.orbit_class,
+          magnitude: asteroid.absolute_magnitude_h,
+          orbitalPeriod: asteroid.orbital_data.period_yr,
+          inclination: asteroid.orbital_data.inclination,
+        }
+
+        const result = await analyzeSingleObjectWithGemini(analysisData)
+        setAiAnalysis(result.analysis)
+      } catch (error) {
+        console.error('Error running AI analysis:', error)
+        setAiAnalysis('AI analysis temporarily unavailable. Please try again later.')
+      } finally {
+        setAiLoading(false)
+      }
+    }
+
+    runAiAnalysis()
+  }, [asteroid])
 
   if (loading) {
     return (
@@ -260,6 +323,42 @@ export default function AsteroidDetailClient({ asteroidId }: AsteroidDetailClien
             </div>
           </div>
         </div>
+      )}
+
+      {/* AI Analysis Section */}
+      <div className="bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 shadow-lg glow-blue mt-8">
+        <h3 className="text-xl font-semibold text-cyan-400 mb-4 flex items-center space-x-2">
+          <Zap className="w-5 h-5" />
+          <span>AI Analysis</span>
+        </h3>
+        
+        {aiLoading ? (
+          <div className="text-center py-8">
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full mb-4 animate-pulse">
+              <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <p className="text-gray-400">Analyzing asteroid data with AI...</p>
+          </div>
+        ) : aiAnalysis ? (
+          <AIResponse 
+            content={aiAnalysis} 
+            title="Asteroid Impact Risk Assessment"
+            type="analysis"
+            className="mb-4"
+          />
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-gray-400">AI analysis will appear here once data is loaded.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Impact Prediction Map */}
+      {asteroidForMap && (
+        <ImpactMap 
+          asteroid={asteroidForMap} 
+          className="mt-8"
+        />
       )}
     </StandardLayout>
   )
