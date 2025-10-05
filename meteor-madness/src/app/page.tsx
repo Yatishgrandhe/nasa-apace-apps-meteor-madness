@@ -2,7 +2,21 @@
 
 import Navigation from '@/components/Navigation'
 import { motion } from 'framer-motion'
-import { Globe, Search, Eye, Target, Zap, AlertTriangle } from 'lucide-react'
+import { Search, Eye, Target, Zap, AlertTriangle } from 'lucide-react'
+import Image from 'next/image'
+
+// Custom Logo Component
+function LogoIcon({ className }: { className?: string }) {
+  return (
+    <Image 
+      src="/logo.png" 
+      alt="NEOWatch Logo" 
+      width={32} 
+      height={32} 
+      className={className}
+    />
+  );
+}
 
 export default function Home() {
   return (
@@ -21,9 +35,15 @@ export default function Home() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-            className="inline-flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 lg:w-32 lg:h-32 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full mb-6 shadow-lg glow-blue"
+            className="inline-flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 lg:w-32 lg:h-32 mb-6 shadow-lg"
           >
-            <Globe className="w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 text-white" />
+            <Image 
+              src="/logo.png" 
+              alt="NEOWatch Logo" 
+              width={128} 
+              height={128} 
+              className="w-full h-full object-contain"
+            />
           </motion.div>
           
           <motion.h1
@@ -63,7 +83,7 @@ export default function Home() {
             {
               title: 'Solar System 3D',
               description: 'Interactive 3D visualization of our solar system',
-              icon: Globe,
+              icon: LogoIcon,
               color: 'from-orange-500 to-orange-600',
               href: '/solar-system'
             },
@@ -112,9 +132,9 @@ export default function Home() {
           </h2>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { label: 'Objects Monitored', value: '28,000+', icon: Globe },
+              { label: 'Objects Monitored', value: '28,000+', icon: LogoIcon },
               { label: 'Hazardous Objects', value: '2,000+', icon: AlertTriangle },
-              { label: 'Solar Objects', value: '1000+', icon: Globe },
+              { label: 'Solar Objects', value: '1000+', icon: LogoIcon },
               { label: 'Data Sources', value: 'NASA JPL', icon: Search }
             ].map((stat, index) => (
               <motion.div

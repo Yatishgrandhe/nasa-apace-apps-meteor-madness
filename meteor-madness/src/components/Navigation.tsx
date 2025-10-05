@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Zap, Menu, X } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
+import Image from 'next/image'
 
 interface NavigationProps {}
 
@@ -19,8 +20,14 @@ export default function Navigation({}: NavigationProps) {
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center space-x-2 sm:space-x-3"
           >
-            <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full flex items-center justify-center glow-blue">
-              <Zap className="w-4 h-4 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-white" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center overflow-hidden">
+              <Image 
+                src="/logo.png" 
+                alt="NEOWatch Logo" 
+                width={48} 
+                height={48} 
+                className="w-full h-full object-contain"
+              />
             </div>
             <span className="text-lg sm:text-xl lg:text-2xl xl:text-3xl 2xl:text-4xl font-bold text-cyan-400">
               NEOWatch
