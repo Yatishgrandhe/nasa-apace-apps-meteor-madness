@@ -40,13 +40,13 @@ export async function analyzeImpactWithGemini(data: GeminiAnalysisRequest): Prom
     // Check if we have an AI analysis API key
     const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY
     
-    if (!apiKey || apiKey === 'your_gemini_api_key_here') {
+    if (!apiKey || apiKey === 'your_gemini_api_key_here' || apiKey === 'AIzaSyB42RrQJ3LCmZhX-EvGYNiDNLjr2r3TcIk') {
       console.warn('Gemini API key not found or invalid. Using mock analysis.')
       return generateMockAnalysis(data)
     }
 
     // Real AI analysis API call
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -75,11 +75,13 @@ Provide a detailed risk assessment, recommendations, and identify the most criti
     if (!response.ok) {
       console.error(`Gemini API error: ${response.status} ${response.statusText}`)
       if (response.status === 404) {
-        console.warn('Gemini model not found, falling back to mock analysis')
+        console.warn('Gemini model not found or API key invalid, falling back to mock analysis')
       } else if (response.status === 403) {
         console.warn('Gemini API key invalid or insufficient permissions, falling back to mock analysis')
       } else if (response.status === 429) {
         console.warn('Gemini API rate limit exceeded, falling back to mock analysis')
+      } else if (response.status === 400) {
+        console.warn('Gemini API bad request, falling back to mock analysis')
       }
       throw new Error(`AI Analysis API error: ${response.status}`)
     }
@@ -113,13 +115,13 @@ export async function analyzeSingleObjectWithGemini(data: SingleObjectAnalysisRe
     // Check if we have an AI analysis API key
     const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY
     
-    if (!apiKey || apiKey === 'your_gemini_api_key_here') {
+    if (!apiKey || apiKey === 'your_gemini_api_key_here' || apiKey === 'AIzaSyB42RrQJ3LCmZhX-EvGYNiDNLjr2r3TcIk') {
       console.warn('Gemini API key not found or invalid. Using mock analysis.')
       return generateSingleObjectMockAnalysis(data)
     }
 
     // Real AI analysis API call for single object
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -166,11 +168,13 @@ Format the response in clear sections with actionable insights.`
     if (!response.ok) {
       console.error(`Gemini API error: ${response.status} ${response.statusText}`)
       if (response.status === 404) {
-        console.warn('Gemini model not found, falling back to mock analysis')
+        console.warn('Gemini model not found or API key invalid, falling back to mock analysis')
       } else if (response.status === 403) {
         console.warn('Gemini API key invalid or insufficient permissions, falling back to mock analysis')
       } else if (response.status === 429) {
         console.warn('Gemini API rate limit exceeded, falling back to mock analysis')
+      } else if (response.status === 400) {
+        console.warn('Gemini API bad request, falling back to mock analysis')
       }
       throw new Error(`AI Analysis API error: ${response.status}`)
     }
