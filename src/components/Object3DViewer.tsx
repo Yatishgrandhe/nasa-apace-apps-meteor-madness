@@ -56,15 +56,6 @@ export default function Object3DViewer({
           >
             <RefreshCw className="w-4 h-4" />
           </button>
-          <a
-            href={`https://eyes.nasa.gov/apps/solar-system/#/asteroid/${objectId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-2 text-gray-400 hover:text-cyan-400 transition-colors duration-200 bg-black/20 rounded-lg hover:bg-black/40"
-            title="Open in NASA Eyes"
-          >
-            <ExternalLink className="w-4 h-4" />
-          </a>
         </div>
       </div>
       

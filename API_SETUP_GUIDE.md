@@ -62,7 +62,7 @@ curl "https://api.nasa.gov/neo/rest/v1/feed?api_key=YOUR_NASA_API_KEY"
 ```bash
 curl -H "Content-Type: application/json" \
      -d '{"contents":[{"parts":[{"text":"Hello"}]}]}' \
-     "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=YOUR_GEMINI_API_KEY"
+     "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=YOUR_GEMINI_API_KEY"
 ```
 
 ### Test TomTom API Key
@@ -76,7 +76,7 @@ curl "https://api.tomtom.com/search/2/geocode/New York.json?key=YOUR_TOMTOM_API_
 
 1. **404 Errors from Gemini API**
    - The model name might be incorrect
-   - Use `gemini-1.5-flash` instead of `gemini-1.5-pro`
+   - Use `gemini-2.5-flash` (latest stable model)
    - Check if your API key has access to the model
 
 2. **NASA API Returns Empty Results**

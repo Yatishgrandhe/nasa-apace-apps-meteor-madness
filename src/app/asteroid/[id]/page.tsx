@@ -2,18 +2,20 @@ import { Metadata } from 'next'
 import AsteroidDetailClient from './AsteroidDetailClient'
 
 interface AsteroidPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export async function generateMetadata({ params }: AsteroidPageProps): Promise<Metadata> {
+  const { id } = await params
   return {
-    title: `Asteroid ${params.id} Details | NEOWatch`,
-    description: `Detailed information about asteroid ${params.id} including orbital data, size, and potential impact risk.`,
+    title: `Asteroid ${id} Details | NEOWatch`,
+    description: `Detailed information about asteroid ${id} including orbital data, size, and potential impact risk.`,
   }
 }
 
-export default function AsteroidPage({ params }: AsteroidPageProps) {
-  return <AsteroidDetailClient asteroidId={params.id} />
+export default async function AsteroidPage({ params }: AsteroidPageProps) {
+  const { id } = await params
+  return <AsteroidDetailClient asteroidId={id} />
 }

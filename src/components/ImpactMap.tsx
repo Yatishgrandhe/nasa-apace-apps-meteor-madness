@@ -2,8 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { MapPin, AlertTriangle, Maximize2, Minimize2, Target, Info } from 'lucide-react'
+import { MapPin, AlertTriangle, Maximize2, Minimize2, Target, Info, Zap, Shield, Plus, Minus } from 'lucide-react'
 import { predictAsteroidImpact, generateImpactScenarios, type AsteroidData, type ImpactPrediction } from '@/lib/utils/impactCalculator'
+
+// Import MapLibre GL JS
+import maplibregl from 'maplibre-gl'
+import 'maplibre-gl/dist/maplibre-gl.css'
 
 interface ImpactMapProps {
   asteroid: AsteroidData
@@ -17,135 +21,202 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
   const [impactPrediction, setImpactPrediction] = useState<ImpactPrediction | null>(null)
   const [scenarios, setScenarios] = useState<ImpactPrediction[]>([])
   const [selectedScenario, setSelectedScenario] = useState<'nominal' | 'worst_case' | 'best_case'>('nominal')
+  const [mapInstance, setMapInstance] = useState<maplibregl.Map | null>(null)
 
   useEffect(() => {
+    console.log('ImpactMap received asteroid data:', asteroid)
     // Calculate impact predictions
     const prediction = predictAsteroidImpact(asteroid)
     const allScenarios = generateImpactScenarios(asteroid)
+    
+    console.log('Impact prediction result:', prediction)
+    console.log('All scenarios:', allScenarios)
     
     setImpactPrediction(prediction)
     setScenarios(allScenarios)
   }, [asteroid])
 
   useEffect(() => {
-    if (!mapRef.current || !impactPrediction) return
-
-    const tomtomApiKey = process.env.NEXT_PUBLIC_TOMTOM_API_KEY
-    
-    if (!tomtomApiKey || tomtomApiKey === 'your_tomtom_api_key_here') {
-      console.warn('TomTom API key not found. Using placeholder map.')
+    if (!mapRef.current || !impactPrediction) {
       setMapLoaded(true)
       return
     }
 
-    // Load TomTom Maps API
-    const script = document.createElement('script')
-    script.src = `https://api.tomtom.com/maps-sdk-for-web/cdn/6.x/6.24.0/maps-web.min.js`
-    script.async = true
-    script.onload = () => {
-      if (window.tt) {
-        initializeMap()
-      }
-    }
-    document.head.appendChild(script)
-
-    // Load TomTom CSS
-    const link = document.createElement('link')
-    link.rel = 'stylesheet'
-    link.href = 'https://api.tomtom.com/maps-sdk-for-web/cdn/6.x/6.24.0/maps.css'
-    document.head.appendChild(link)
-
-    return () => {
-      document.head.removeChild(script)
-      document.head.removeChild(link)
-    }
-  }, [impactPrediction])
-
-  const initializeMap = () => {
-    if (!mapRef.current || !window.tt || !impactPrediction) return
-
     const tomtomApiKey = process.env.NEXT_PUBLIC_TOMTOM_API_KEY
+    
+    // Use OpenStreetMap style for reliable rendering without API key issues
+    const mapStyle = tomtomApiKey && tomtomApiKey !== 'your_actual_tomtom_api_key_here' 
+      ? `https://api.tomtom.com/map/1/style/basic/main.json?key=${tomtomApiKey}`
+      : {
+          version: 8,
+          sources: {
+            'osm': {
+              type: 'raster',
+              tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+              tileSize: 256,
+              attribution: '© OpenStreetMap contributors'
+            }
+          },
+          layers: [
+            {
+              id: 'osm',
+              type: 'raster',
+              source: 'osm'
+            }
+          ]
+        }
 
     try {
-      // Initialize TomTom map
-      const map = new window.tt.Map({
-        key: tomtomApiKey,
+      // Initialize MapLibre GL JS
+      const map = new maplibregl.Map({
         container: mapRef.current,
+        style: mapStyle,
         center: [impactPrediction.impactLocation.longitude, impactPrediction.impactLocation.latitude],
-        zoom: 6,
-        style: 'dark',
-        interactive: true
+        zoom: 8,
+        pitch: 0,
+        bearing: 0
       })
 
       map.on('load', () => {
         setMapLoaded(true)
 
         // Add impact prediction marker
-        const impactMarker = new window.tt.Marker({
+        new maplibregl.Marker({
           color: '#ff4444',
           scale: 1.5
         })
           .setLngLat([impactPrediction.impactLocation.longitude, impactPrediction.impactLocation.latitude])
           .addTo(map)
 
+        // Add impact zone circle using GeoJSON
+        const impactZoneGeoJSON = {
+          type: 'FeatureCollection',
+          features: [{
+            type: 'Feature',
+            geometry: {
+              type: 'Point',
+              coordinates: [impactPrediction.impactLocation.longitude, impactPrediction.impactLocation.latitude]
+            },
+            properties: {
+              radius: impactPrediction.affectedRadius * 1000 // Convert km to meters
+            }
+          }]
+        }
+
+        // Add crater zone circle using GeoJSON
+        const craterZoneGeoJSON = {
+          type: 'FeatureCollection',
+          features: [{
+            type: 'Feature',
+            geometry: {
+              type: 'Point',
+              coordinates: [impactPrediction.impactLocation.longitude, impactPrediction.impactLocation.latitude]
+            },
+            properties: {
+              radius: impactPrediction.craterSize.diameter / 2 // meters
+            }
+          }]
+        }
+
         // Add impact zone circle
-        const impactZone = new window.tt.Circle({
-          color: '#ff4444',
-          opacity: 0.3,
-          strokeColor: '#ff4444',
-          strokeOpacity: 0.8,
-          strokeWidth: 2
+        map.addSource('impact-zone', {
+          type: 'geojson',
+          data: impactZoneGeoJSON
         })
-          .setLngLat([impactPrediction.impactLocation.longitude, impactPrediction.impactLocation.latitude])
-          .setRadius(impactPrediction.affectedRadius * 1000) // Convert km to meters
-          .addTo(map)
 
-        // Add crater size circle (inner)
-        const craterZone = new window.tt.Circle({
-          color: '#ff6666',
-          opacity: 0.6,
-          strokeColor: '#ff6666',
-          strokeOpacity: 1,
-          strokeWidth: 3
+        map.addLayer({
+          id: 'impact-zone-circle',
+          type: 'circle',
+          source: 'impact-zone',
+          paint: {
+            'circle-radius': {
+              property: 'radius',
+              type: 'identity'
+            },
+            'circle-color': '#ff4444',
+            'circle-opacity': 0.3,
+            'circle-stroke-color': '#ff4444',
+            'circle-stroke-opacity': 0.8,
+            'circle-stroke-width': 2
+          }
         })
-          .setLngLat([impactPrediction.impactLocation.longitude, impactPrediction.impactLocation.latitude])
-          .setRadius(impactPrediction.craterSize.diameter / 2) // meters
-          .addTo(map)
 
-        // Add popup with impact details
-        const popup = new window.tt.Popup({ offset: 25, closeButton: true })
-          .setHTML(`
-            <div class="p-4 bg-black/90 text-white rounded-lg border border-red-500/30">
-              <div class="flex items-center space-x-2 mb-3">
-                <div class="w-3 h-3 bg-red-500 rounded-full"></div>
-                <h3 class="text-lg font-bold text-red-400">Predicted Impact Zone</h3>
-              </div>
-              <div class="space-y-2 text-sm">
-                <div><strong>Location:</strong> ${impactPrediction.impactLocation.latitude.toFixed(4)}°, ${impactPrediction.impactLocation.longitude.toFixed(4)}°</div>
-                <div><strong>Country:</strong> ${impactPrediction.impactLocation.country || 'Unknown'}</div>
-                <div><strong>Probability:</strong> ${(impactPrediction.impactProbability * 100).toFixed(3)}%</div>
-                <div><strong>Energy:</strong> ${impactPrediction.impactEnergy.toFixed(2)} MT TNT</div>
-                <div><strong>Crater Size:</strong> ${impactPrediction.craterSize.diameter.toFixed(0)}m diameter</div>
-                <div><strong>Affected Radius:</strong> ${impactPrediction.affectedRadius.toFixed(1)} km</div>
-                <div><strong>Confidence:</strong> ${impactPrediction.confidence.toFixed(1)}%</div>
-              </div>
-            </div>
-          `)
+        // Add crater zone circle
+        map.addSource('crater-zone', {
+          type: 'geojson',
+          data: craterZoneGeoJSON
+        })
 
-        impactMarker.setPopup(popup)
+        map.addLayer({
+          id: 'crater-zone-circle',
+          type: 'circle',
+          source: 'crater-zone',
+          paint: {
+            'circle-radius': {
+              property: 'radius',
+              type: 'identity'
+            },
+            'circle-color': '#ff6666',
+            'circle-opacity': 0.6,
+            'circle-stroke-color': '#ff6666',
+            'circle-stroke-opacity': 1,
+            'circle-stroke-width': 3
+          }
+        })
 
-        // Store map reference for fullscreen functionality
-        ;(mapRef.current as any).tomtomMap = map
+        // Store map reference for fullscreen functionality and zoom controls
+        ;(mapRef.current as any).maplibreMap = map
+        setMapInstance(map)
       })
 
+      map.on('error', (error) => {
+        console.error('MapLibre GL JS error:', error)
+        setMapLoaded(true)
+      })
+
+      // Cleanup function
+      return () => {
+        if (map) {
+          map.remove()
+        }
+        setMapInstance(null)
+      }
+
     } catch (error) {
-      console.error('Error initializing TomTom map:', error)
+      console.error('Error initializing MapLibre GL JS map:', error)
       setMapLoaded(true) // Still show the component even if map fails
     }
-  }
+  }, [impactPrediction])
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen)
+  }
+
+  const zoomIn = () => {
+    const map = mapInstance || (mapRef.current as any)?.maplibreMap
+    if (map) {
+      const currentZoom = map.getZoom()
+      map.zoomTo(currentZoom + 1, { duration: 300 })
+    }
+  }
+
+  const zoomOut = () => {
+    const map = mapInstance || (mapRef.current as any)?.maplibreMap
+    if (map) {
+      const currentZoom = map.getZoom()
+      map.zoomTo(currentZoom - 1, { duration: 300 })
+    }
+  }
+
+  const resetView = () => {
+    const map = mapInstance || (mapRef.current as any)?.maplibreMap
+    if (map && impactPrediction) {
+      map.flyTo({
+        center: [impactPrediction.impactLocation.longitude, impactPrediction.impactLocation.latitude],
+        zoom: 8,
+        duration: 1000
+      })
+    }
   }
 
   const currentScenario = scenarios.find(s => s.scenario === selectedScenario) || impactPrediction
@@ -160,6 +231,13 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
       </div>
     )
   }
+
+  // Calculate visual scale factors for impact zones (fallback visualization)
+  const maxRadius = Math.max(currentScenario.affectedRadius, currentScenario.craterSize.diameter / 1000)
+  const scaleFactor = Math.min(200 / maxRadius, 1) // Scale to fit in 200px max
+  
+  const affectedRadiusPx = Math.max(currentScenario.affectedRadius * scaleFactor, 20)
+  const craterRadiusPx = Math.max(currentScenario.craterSize.diameter * scaleFactor / 1000, 10)
 
   return (
     <motion.div
@@ -235,21 +313,136 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
         </div>
       </div>
 
-      {/* Map Container */}
-      <div className={`relative ${isFullscreen ? 'h-[calc(100vh-200px)]' : 'h-96'}`}>
-        <div
-          ref={mapRef}
-          className="w-full h-full rounded-b-xl"
-          style={{ minHeight: '300px' }}
-        />
+              {/* Map Container */}
+              <div className={`relative ${isFullscreen ? 'h-[calc(100vh-200px)]' : 'h-96'}`}>
+                <div
+                  ref={mapRef}
+                  className="w-full h-full rounded-b-xl"
+                  style={{ minHeight: '300px' }}
+                />
+                
+                {/* Zoom Controls */}
+                {mapLoaded && (mapInstance || (mapRef.current as any)?.maplibreMap) && (
+                  <div className="absolute top-4 right-4 flex flex-col space-y-2 z-10">
+                    <button
+                      onClick={zoomIn}
+                      className="p-2 bg-black/80 backdrop-blur-sm border border-cyan-500/30 hover:border-cyan-400 text-cyan-400 rounded-lg transition-colors shadow-lg"
+                      title="Zoom In"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={zoomOut}
+                      className="p-2 bg-black/80 backdrop-blur-sm border border-cyan-500/30 hover:border-cyan-400 text-cyan-400 rounded-lg transition-colors shadow-lg"
+                      title="Zoom Out"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={resetView}
+                      className="p-2 bg-black/80 backdrop-blur-sm border border-cyan-500/30 hover:border-cyan-400 text-cyan-400 rounded-lg transition-colors shadow-lg"
+                      title="Reset View"
+                    >
+                      <Target className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
         
-        {!mapLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-900/50 rounded-b-xl">
-            <div className="text-center">
-              <div className="w-12 h-12 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-cyan-400">Loading Impact Map...</p>
-              {(!process.env.NEXT_PUBLIC_TOMTOM_API_KEY || process.env.NEXT_PUBLIC_TOMTOM_API_KEY === 'your_tomtom_api_key_here') && (
-                <p className="text-yellow-400 text-sm mt-2">TomTom API key required for map display</p>
+                {!mapLoaded && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-900/50 rounded-b-xl">
+                    <div className="text-center">
+                      <div className="w-12 h-12 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin mx-auto mb-4"></div>
+                      <p className="text-cyan-400">Loading Impact Map...</p>
+                      <p className="text-gray-400 text-sm mt-2">Initializing MapLibre GL JS...</p>
+                    </div>
+                  </div>
+                )}
+
+        {/* Fallback Custom Visualization when map fails to load */}
+        {mapLoaded && !(mapRef.current as any)?.maplibreMap && (
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-900 via-blue-800 to-green-800 rounded-b-xl overflow-hidden">
+            {/* Earth surface pattern */}
+            <div className="absolute inset-0 opacity-30">
+              <div className="w-full h-full bg-gradient-radial from-green-600/20 via-blue-600/10 to-transparent"></div>
+              <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-green-500/10 rounded-full"></div>
+              <div className="absolute top-3/4 right-1/4 w-24 h-24 bg-green-500/10 rounded-full"></div>
+              <div className="absolute bottom-1/4 left-1/3 w-20 h-20 bg-green-500/10 rounded-full"></div>
+              <div className="absolute top-1/2 right-1/3 w-16 h-16 bg-green-500/10 rounded-full"></div>
+            </div>
+
+            {/* Grid lines for reference */}
+            <div className="absolute inset-0 opacity-20">
+              <div className="w-full h-full">
+                {/* Latitude lines */}
+                {[0.25, 0.5, 0.75].map((y, i) => (
+                  <div key={i} className="absolute w-full border-t border-white/20" style={{ top: `${y * 100}%` }}></div>
+                ))}
+                {/* Longitude lines */}
+                {[0.25, 0.5, 0.75].map((x, i) => (
+                  <div key={i} className="absolute h-full border-l border-white/20" style={{ left: `${x * 100}%` }}></div>
+                ))}
+              </div>
+            </div>
+
+            {/* Impact visualization */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              {/* Affected area circle */}
+              <div 
+                className="absolute border-2 border-red-500/60 rounded-full animate-pulse"
+                style={{ 
+                  width: `${affectedRadiusPx}px`,
+                  height: `${affectedRadiusPx}px`,
+                  animationDuration: '3s'
+                }}
+              >
+                <div className="absolute inset-0 rounded-full bg-red-500/10"></div>
+              </div>
+              
+              {/* Secondary blast wave */}
+              <div 
+                className="absolute border border-red-400/40 rounded-full"
+                style={{ 
+                  width: `${affectedRadiusPx * 1.5}px`,
+                  height: `${affectedRadiusPx * 1.5}px`,
+                  animation: 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                }}
+              >
+                <div className="absolute inset-0 rounded-full bg-red-400/5"></div>
+              </div>
+              
+              {/* Crater zone circle */}
+              <div 
+                className="absolute border-2 border-red-400 rounded-full bg-red-500/20"
+                style={{ 
+                  width: `${craterRadiusPx}px`,
+                  height: `${craterRadiusPx}px`
+                }}
+              ></div>
+              
+              {/* Impact point marker */}
+              <div className="absolute w-6 h-6 bg-red-500 rounded-full border-2 border-white shadow-lg animate-pulse">
+                <div className="absolute inset-0 rounded-full bg-red-400 animate-ping"></div>
+              </div>
+            </div>
+
+            {/* Impact effects visualization */}
+            <div className="absolute top-4 left-4 space-y-2">
+              {currentScenario.impactProbability > 0.001 && (
+                <div className="bg-red-900/80 backdrop-blur-sm border border-red-500/50 rounded-lg p-3 text-red-200 text-sm">
+                  <div className="flex items-center space-x-2">
+                    <Zap className="w-4 h-4 text-red-400" />
+                    <span className="font-semibold">Impact Detected</span>
+                  </div>
+                </div>
+              )}
+              
+              {currentScenario.impactEnergy > 1 && (
+                <div className="bg-orange-900/80 backdrop-blur-sm border border-orange-500/50 rounded-lg p-3 text-orange-200 text-sm">
+                  <div className="flex items-center space-x-2">
+                    <Shield className="w-4 h-4 text-orange-400" />
+                    <span className="font-semibold">High Energy Release</span>
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -259,15 +452,15 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
         <div className="absolute bottom-4 left-4 bg-black/80 backdrop-blur-sm border border-cyan-500/30 rounded-lg p-4 text-white text-sm">
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-red-500 rounded-full"></div>
+              <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse"></div>
               <span>Predicted Impact Point</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-red-600 rounded-full border border-red-500"></div>
+              <div className="w-4 h-4 bg-red-400 rounded-full border border-red-400"></div>
               <span>Crater Zone ({currentScenario.craterSize.diameter.toFixed(0)}m)</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-red-500/30 rounded-full border border-red-500"></div>
+              <div className="w-4 h-4 bg-red-500/60 rounded-full border border-red-500"></div>
               <span>Affected Area ({currentScenario.affectedRadius.toFixed(1)}km)</span>
             </div>
           </div>
@@ -358,11 +551,4 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
       </div>
     </motion.div>
   )
-}
-
-// Extend window interface for TomTom
-declare global {
-  interface Window {
-    tt: any
-  }
 }

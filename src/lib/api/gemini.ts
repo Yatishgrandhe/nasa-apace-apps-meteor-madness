@@ -35,18 +35,60 @@ export interface GeminiAnalysisResponse {
   timestamp: string
 }
 
+export interface MitigationStrategyRequest {
+  name: string
+  type: 'asteroid' | 'comet'
+  diameter: {
+    min: number
+    max: number
+  }
+  isHazardous: boolean
+  missDistance: number
+  velocity: number
+  approachDate: string
+  impactProbability?: number
+  impactEnergy?: number
+  craterSize?: {
+    diameter: number
+    depth: number
+  }
+  affectedRadius?: number
+}
+
+export interface MitigationStrategyResponse {
+  strategies: {
+    category: string
+    title: string
+    description: string
+    feasibility: 'high' | 'medium' | 'low'
+    timeframe: string
+    effectiveness: string
+    requirements: string[]
+    estimatedCost?: string
+  }[]
+  timeline: {
+    phase: string
+    duration: string
+    description: string
+    priority: string
+  }[]
+  globalCoordination: string[]
+  publicPreparedness: string[]
+  timestamp: string
+}
+
 export async function analyzeImpactWithGemini(data: GeminiAnalysisRequest): Promise<GeminiAnalysisResponse> {
   try {
     // Check if we have an AI analysis API key
     const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY
     
-    if (!apiKey || apiKey === 'your_gemini_api_key_here' || apiKey === 'AIzaSyB42RrQJ3LCmZhX-EvGYNiDNLjr2r3TcIk') {
+    if (!apiKey || apiKey === 'your_gemini_api_key_here' || apiKey === 'your_actual_gemini_api_key_here') {
       console.warn('Gemini API key not found or invalid. Using mock analysis.')
       return generateMockAnalysis(data)
     }
 
     // Real AI analysis API call
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -115,13 +157,13 @@ export async function analyzeSingleObjectWithGemini(data: SingleObjectAnalysisRe
     // Check if we have an AI analysis API key
     const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY
     
-    if (!apiKey || apiKey === 'your_gemini_api_key_here' || apiKey === 'AIzaSyB42RrQJ3LCmZhX-EvGYNiDNLjr2r3TcIk') {
+    if (!apiKey || apiKey === 'your_gemini_api_key_here' || apiKey === 'your_actual_gemini_api_key_here') {
       console.warn('Gemini API key not found or invalid. Using mock analysis.')
       return generateSingleObjectMockAnalysis(data)
     }
 
     // Real AI analysis API call for single object
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -370,6 +412,237 @@ function determineSingleObjectRiskLevel(data: SingleObjectAnalysisRequest): 'low
   }
   
   return 'low'
+}
+
+export async function getMitigationStrategiesWithGemini(data: MitigationStrategyRequest): Promise<MitigationStrategyResponse> {
+  try {
+    // Check if we have an AI analysis API key
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY
+    
+    if (!apiKey || apiKey === 'your_gemini_api_key_here' || apiKey === 'your_actual_gemini_api_key_here') {
+      console.warn('Gemini API key not found or invalid. Using mock mitigation strategies.')
+      return generateMockMitigationStrategies(data)
+    }
+
+    // Real AI analysis API call for mitigation strategies
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: `Based on NASA's planetary defense strategies and the following asteroid data, provide detailed mitigation strategies:
+
+ASTEROID DATA:
+- Name: ${data.name}
+- Type: ${data.type.toUpperCase()}
+- Diameter: ${data.diameter.min}-${data.diameter.max} meters
+- Velocity: ${data.velocity} km/s
+- Miss Distance: ${data.missDistance} AU
+- Approach Date: ${data.approachDate}
+- Hazardous: ${data.isHazardous}
+${data.impactProbability ? `- Impact Probability: ${data.impactProbability}` : ''}
+${data.impactEnergy ? `- Impact Energy: ${data.impactEnergy} MT TNT` : ''}
+${data.craterSize ? `- Crater Size: ${data.craterSize.diameter}m diameter, ${data.craterSize.depth}m depth` : ''}
+${data.affectedRadius ? `- Affected Radius: ${data.affectedRadius} km` : ''}
+
+Please provide a comprehensive mitigation strategy report in the following JSON format:
+
+{
+  "strategies": [
+    {
+      "category": "Detection & Tracking",
+      "title": "Enhanced Monitoring",
+      "description": "Detailed description of the strategy",
+      "feasibility": "high|medium|low",
+      "timeframe": "Implementation timeframe",
+      "effectiveness": "Expected effectiveness percentage",
+      "requirements": ["requirement1", "requirement2"],
+      "estimatedCost": "Cost estimate if available"
+    }
+  ],
+  "timeline": [
+    {
+      "phase": "Phase name",
+      "duration": "Duration",
+      "description": "What happens in this phase",
+      "priority": "high|medium|low"
+    }
+  ],
+  "globalCoordination": [
+    "Coordination requirement 1",
+    "Coordination requirement 2"
+  ],
+  "publicPreparedness": [
+    "Public preparedness measure 1",
+    "Public preparedness measure 2"
+  ]
+}
+
+Include strategies for:
+1. Detection & Tracking (enhanced monitoring, radar observations)
+2. Kinetic Impactor (like NASA's DART mission)
+3. Gravity Tractor (gravitational deflection)
+4. Nuclear Deflection (for large objects with short warning)
+5. Civil Defense (evacuation, sheltering)
+6. International Coordination (IAWN, COPUOS, SMPAG)
+
+Base recommendations on NASA's Planetary Defense Strategy, DART mission results, and current international protocols.`
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.3,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 4096,
+        }
+      })
+    })
+
+    if (!response.ok) {
+      console.error(`Gemini API error: ${response.status} ${response.statusText}`)
+      throw new Error(`AI Mitigation API error: ${response.status}`)
+    }
+
+    const result = await response.json()
+    
+    // Handle API response errors
+    if (!result.candidates || result.candidates.length === 0) {
+      console.warn('No candidates in Gemini response, falling back to mock mitigation strategies')
+      throw new Error('No mitigation candidates available')
+    }
+    
+    const analysisText = result.candidates?.[0]?.content?.parts?.[0]?.text || 'Mitigation analysis unavailable'
+
+    // Try to parse JSON from the response
+    try {
+      const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return {
+          ...parsed,
+          timestamp: new Date().toISOString()
+        };
+      }
+    } catch (parseError) {
+      console.warn('Failed to parse JSON from Gemini response, using mock strategies');
+    }
+
+    // Fallback to mock if parsing fails
+    return generateMockMitigationStrategies(data);
+
+  } catch (error) {
+    console.error('AI Mitigation API error:', error)
+    // Fallback to mock mitigation strategies
+    return generateMockMitigationStrategies(data)
+  }
+}
+
+function generateMockMitigationStrategies(data: MitigationStrategyRequest): MitigationStrategyResponse {
+  const avgDiameter = (data.diameter.min + data.diameter.max) / 2
+  const isLarge = avgDiameter > 1000
+  const isVeryClose = data.missDistance < 0.05
+  const isHazardous = data.isHazardous
+
+  return {
+    strategies: [
+      {
+        category: "Detection & Tracking",
+        title: "Enhanced Monitoring System",
+        description: `Deploy advanced ground-based and space-based telescopes to continuously track ${data.name}. Implement radar observations during close approach to refine orbital parameters and physical characteristics.`,
+        feasibility: "high",
+        timeframe: "Immediate - 6 months",
+        effectiveness: "95%",
+        requirements: ["Ground-based telescopes", "Radar facilities", "Data processing systems", "International coordination"],
+        estimatedCost: "$5-10M annually"
+      },
+      {
+        category: "Kinetic Impactor",
+        title: "DART-Style Deflection Mission",
+        description: `Launch a kinetic impactor spacecraft similar to NASA's DART mission to alter ${data.name}'s trajectory through high-speed impact. Most effective for objects with sufficient warning time.`,
+        feasibility: isLarge ? "medium" : "high",
+        timeframe: "2-5 years",
+        effectiveness: isLarge ? "60-80%" : "80-95%",
+        requirements: ["Launch vehicle", "Spacecraft design", "Navigation systems", "Impact assessment"],
+        estimatedCost: "$300-500M"
+      },
+      {
+        category: "Gravity Tractor",
+        title: "Gravitational Deflection",
+        description: `Deploy a spacecraft that hovers near ${data.name} and uses its gravitational pull to gradually alter the object's trajectory. Requires long lead time but very precise.`,
+        feasibility: "medium",
+        timeframe: "5-15 years",
+        effectiveness: "70-90%",
+        requirements: ["Long-duration spacecraft", "Precise navigation", "Power systems", "Extended mission support"],
+        estimatedCost: "$200-400M"
+      },
+      {
+        category: "Nuclear Deflection",
+        title: "Nuclear Standoff Deflection",
+        description: `For large objects with short warning time, deploy a nuclear device that detonates at a safe distance to create a deflection impulse. Last resort option requiring international approval.`,
+        feasibility: isLarge && isVeryClose ? "high" : "low",
+        timeframe: "1-3 years",
+        effectiveness: "85-95%",
+        requirements: ["Nuclear device", "Launch capability", "International coordination", "Safety protocols"],
+        estimatedCost: "$500M-1B"
+      },
+      {
+        category: "Civil Defense",
+        title: "Emergency Preparedness",
+        description: `Develop evacuation and sheltering plans for potential impact zones. Establish early warning systems and public communication protocols.`,
+        feasibility: "high",
+        timeframe: "6 months - 2 years",
+        effectiveness: "60-80%",
+        requirements: ["Emergency management systems", "Public communication", "Infrastructure assessment", "Training programs"],
+        estimatedCost: "$10-50M"
+      }
+    ],
+    timeline: [
+      {
+        phase: "Immediate Assessment",
+        duration: "0-6 months",
+        description: "Enhanced tracking, orbital refinement, and risk assessment",
+        priority: "high"
+      },
+      {
+        phase: "Mission Planning",
+        duration: "6 months - 2 years",
+        description: "Design and develop deflection mission if needed",
+        priority: isHazardous ? "high" : "medium"
+      },
+      {
+        phase: "Mission Execution",
+        duration: "1-3 years",
+        description: "Launch and execute deflection mission",
+        priority: isHazardous ? "high" : "medium"
+      },
+      {
+        phase: "Monitoring & Verification",
+        duration: "1-5 years",
+        description: "Monitor trajectory changes and verify mission success",
+        priority: "high"
+      }
+    ],
+    globalCoordination: [
+      "International Asteroid Warning Network (IAWN) coordination",
+      "United Nations Committee on Peaceful Uses of Outer Space (COPUOS)",
+      "Space Mission Planning Advisory Group (SMPAG)",
+      "NASA Planetary Defense Coordination Office (PDCO)",
+      "European Space Agency (ESA) coordination",
+      "International data sharing protocols"
+    ],
+    publicPreparedness: [
+      "Public education campaigns about asteroid threats",
+      "Emergency response training for impact zones",
+      "Early warning system development",
+      "Infrastructure hardening in high-risk areas",
+      "International communication protocols",
+      "Community preparedness drills"
+    ],
+    timestamp: new Date().toISOString()
+  }
 }
 
 function extractRecommendations(analysis: string): string[] {

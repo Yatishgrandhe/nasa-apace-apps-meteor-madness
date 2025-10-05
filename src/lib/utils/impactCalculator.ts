@@ -63,13 +63,15 @@ export function calculateImpactProbability(asteroid: AsteroidData): number {
   
   let baseProbability = 0
   
-  // Distance factor (exponential decay)
-  if (missDistanceKm < 10000) { // Within 10,000 km
-    baseProbability = 0.95 * Math.exp(-missDistanceKm / 5000)
-  } else if (missDistanceKm < 50000) { // Within 50,000 km
-    baseProbability = 0.3 * Math.exp(-(missDistanceKm - 10000) / 20000)
-  } else if (missDistanceKm < 100000) { // Within 100,000 km
-    baseProbability = 0.05 * Math.exp(-(missDistanceKm - 50000) / 30000)
+  // More realistic distance factor with lower thresholds
+  if (missDistanceKm < 5000) { // Within 5,000 km (very close)
+    baseProbability = 0.8 * Math.exp(-missDistanceKm / 2000)
+  } else if (missDistanceKm < 20000) { // Within 20,000 km (close)
+    baseProbability = 0.3 * Math.exp(-(missDistanceKm - 5000) / 10000)
+  } else if (missDistanceKm < 50000) { // Within 50,000 km (moderate)
+    baseProbability = 0.1 * Math.exp(-(missDistanceKm - 20000) / 20000)
+  } else if (missDistanceKm < 100000) { // Within 100,000 km (far but possible)
+    baseProbability = 0.02 * Math.exp(-(missDistanceKm - 50000) / 30000)
   }
   
   // Velocity factor (higher velocity = less time for deflection)
@@ -80,12 +82,12 @@ export function calculateImpactProbability(asteroid: AsteroidData): number {
   const sizeFactor = Math.min(1, avgDiameter / 1000) // Normalize to 1km
   
   // Orbital uncertainty factor (based on observation quality)
-  const uncertaintyFactor = asteroid.isHazardous ? 0.8 : 0.3
+  const uncertaintyFactor = asteroid.isHazardous ? 0.6 : 0.2
   
   const probability = baseProbability * velocityFactor * sizeFactor * uncertaintyFactor
   
-  // Cap at realistic maximum
-  return Math.min(probability, 0.15) // Maximum 15% for very close approaches
+  // Cap at realistic maximum but allow for demonstration
+  return Math.min(probability, 0.25) // Maximum 25% for very close approaches
 }
 
 // Calculate potential impact location using orbital mechanics
@@ -200,8 +202,11 @@ export function getLocationFromCoordinates(lat: number, lon: number): { country?
 export function predictAsteroidImpact(asteroid: AsteroidData): ImpactPrediction {
   const impactProbability = calculateImpactProbability(asteroid)
   
-  // Only predict impact if probability is significant (> 0.1%)
-  if (impactProbability < 0.001) {
+  // For demonstration purposes, always show impact prediction for hazardous asteroids
+  // In real scenarios, only predict if probability is significant (> 0.01%)
+  const shouldPredict = impactProbability >= 0.01 || asteroid.isHazardous
+  
+  if (!shouldPredict && impactProbability < 0.001) {
     return {
       impactProbability: 0,
       impactLocation: { latitude: 0, longitude: 0, country: 'No Impact Predicted' },
@@ -214,6 +219,9 @@ export function predictAsteroidImpact(asteroid: AsteroidData): ImpactPrediction 
     }
   }
   
+  // For demonstration, use a minimum probability for hazardous asteroids
+  const finalProbability = impactProbability < 0.001 ? 0.05 : impactProbability
+  
   const impactLocation = calculateImpactLocation(asteroid)
   const impactEnergy = calculateImpactEnergy(asteroid)
   const craterSize = calculateCraterSize(impactEnergy)
@@ -221,13 +229,13 @@ export function predictAsteroidImpact(asteroid: AsteroidData): ImpactPrediction 
   const locationInfo = getLocationFromCoordinates(impactLocation.latitude, impactLocation.longitude)
   
   // Calculate confidence based on observation quality and orbital uncertainty
-  const confidence = Math.min(95, impactProbability * 1000) // Convert to percentage
+  const confidence = Math.min(95, finalProbability * 1000) // Convert to percentage
   
   // Determine scenario
   let scenario: 'nominal' | 'worst_case' | 'best_case' = 'nominal'
-  if (impactProbability > 0.05) {
+  if (finalProbability > 0.05) {
     scenario = 'worst_case'
-  } else if (impactProbability < 0.005) {
+  } else if (finalProbability < 0.005) {
     scenario = 'best_case'
   }
   
@@ -236,7 +244,7 @@ export function predictAsteroidImpact(asteroid: AsteroidData): ImpactPrediction 
   const impactTime = new Date(approachDate.getTime() + (Math.random() * 2 - 1) * 24 * 60 * 60 * 1000) // ±1 day
   
   return {
-    impactProbability,
+    impactProbability: finalProbability,
     impactLocation: {
       ...impactLocation,
       ...locationInfo
