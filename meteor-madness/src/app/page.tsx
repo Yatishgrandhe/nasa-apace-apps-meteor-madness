@@ -2,7 +2,7 @@
 
 import Navigation from '@/components/Navigation'
 import { motion } from 'framer-motion'
-import { Search, Eye, Target, Zap, AlertTriangle } from 'lucide-react'
+import { Search, Eye, Target, Zap, AlertTriangle, Orbit } from 'lucide-react'
 import Image from 'next/image'
 
 // Custom Logo Component
@@ -83,7 +83,7 @@ export default function Home() {
             {
               title: 'Solar System 3D',
               description: 'Interactive 3D visualization of our solar system',
-              icon: LogoIcon,
+              icon: Orbit,
               color: 'from-orange-500 to-orange-600',
               href: '/solar-system'
             },
