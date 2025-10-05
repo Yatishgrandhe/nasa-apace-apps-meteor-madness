@@ -116,7 +116,7 @@ export default function AsteroidDetailClient({ asteroidId }: AsteroidDetailClien
     )
   }
 
-  const orbitInfo = getOrbitClassInfo(asteroid.orbital_data?.orbit_class || 'Unknown')
+  const orbitInfo = getOrbitClassInfo(String(asteroid.orbital_data?.orbit_class || 'Unknown'))
   const latestApproach = asteroid.close_approach_data?.[0]
   const diameterKm = asteroid.estimated_diameter?.kilometers
 
@@ -213,25 +213,25 @@ export default function AsteroidDetailClient({ asteroidId }: AsteroidDetailClien
                     <div className="space-y-3">
                       <div className="flex justify-between">
                         <span className="text-gray-300">Orbit Class:</span>
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${getOrbitClassBgColor(asteroid.orbital_data.orbit_class)} ${getOrbitClassColor(asteroid.orbital_data.orbit_class)}`}>
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${getOrbitClassBgColor(String(asteroid.orbital_data.orbit_class))} ${getOrbitClassColor(String(asteroid.orbital_data.orbit_class))}`}>
                           {orbitInfo.name}
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-300">Perihelion Distance:</span>
-                        <span className="text-white font-medium">{asteroid.orbital_data.perihelion_distance} AU</span>
+                        <span className="text-white font-medium">{String(asteroid.orbital_data.perihelion_distance || 'N/A')} AU</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-300">Aphelion Distance:</span>
-                        <span className="text-white font-medium">{asteroid.orbital_data.aphelion_distance} AU</span>
+                        <span className="text-white font-medium">{String(asteroid.orbital_data.aphelion_distance || 'N/A')} AU</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-300">Inclination:</span>
-                        <span className="text-white font-medium">{asteroid.orbital_data.inclination}°</span>
+                        <span className="text-white font-medium">{String(asteroid.orbital_data.inclination || 'N/A')}°</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-300">Orbital Period:</span>
-                        <span className="text-white font-medium">{asteroid.orbital_data.period_yr} years</span>
+                        <span className="text-white font-medium">{String(asteroid.orbital_data.period_yr || 'N/A')} years</span>
                       </div>
                     </div>
                   </div>
@@ -262,24 +262,30 @@ export default function AsteroidDetailClient({ asteroidId }: AsteroidDetailClien
                       <div className="flex justify-between">
                         <span className="text-gray-300">Relative Velocity:</span>
                         <span className="text-white font-medium">
-                          {parseFloat(latestApproach.relative_velocity.kilometers_per_second).toFixed(2)} km/s
+                          {latestApproach.relative_velocity?.kilometers_per_second 
+                            ? parseFloat(String(latestApproach.relative_velocity.kilometers_per_second)).toFixed(2) 
+                            : 'N/A'} km/s
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-300">Miss Distance:</span>
                         <span className="text-white font-medium">
-                          {parseFloat(latestApproach.miss_distance.kilometers).toFixed(0)} km
+                          {latestApproach.miss_distance?.kilometers 
+                            ? parseFloat(String(latestApproach.miss_distance.kilometers)).toFixed(0) 
+                            : 'N/A'} km
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-300">Miss Distance (lunar):</span>
                         <span className="text-white font-medium">
-                          {parseFloat(latestApproach.miss_distance.lunar).toFixed(2)} LD
+                          {latestApproach.miss_distance?.lunar 
+                            ? parseFloat(String(latestApproach.miss_distance.lunar)).toFixed(2) 
+                            : 'N/A'} LD
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-300">Orbiting Body:</span>
-                        <span className="text-white font-medium">{latestApproach.orbiting_body}</span>
+                        <span className="text-white font-medium">{String(latestApproach.orbiting_body || 'N/A')}</span>
                       </div>
                     </div>
                   </div>

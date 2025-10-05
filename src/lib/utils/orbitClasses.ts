@@ -85,6 +85,11 @@ export function getOrbitClassInfo(orbitClass: string): OrbitClassInfo {
     'JFC': 'Jupiter Family'
   }
   
+  // Ensure orbitClass is a string and handle null/undefined values
+  if (!orbitClass || typeof orbitClass !== 'string') {
+    return ORBIT_CLASSES['Unknown']
+  }
+  
   const normalizedClass = orbitClass.toUpperCase()
   
   // Check JPL code mappings first
@@ -97,11 +102,11 @@ export function getOrbitClassInfo(orbitClass: string): OrbitClassInfo {
   
   // Handle various formats and cases
   const formattedClass = orbitClass
-    .replace(/[^a-zA-Z\s]/g, '') // Remove special characters
-    .trim()
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ')
+    ?.replace(/[^a-zA-Z\s]/g, '') // Remove special characters
+    ?.trim()
+    ?.split(' ')
+    ?.map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    ?.join(' ') || 'Unknown'
 
   // Direct match
   if (ORBIT_CLASSES[formattedClass]) {
