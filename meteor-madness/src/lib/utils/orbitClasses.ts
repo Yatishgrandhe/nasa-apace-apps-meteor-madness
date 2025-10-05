@@ -63,6 +63,34 @@ export const ORBIT_CLASSES: Record<string, OrbitClassInfo> = {
     bgColor: 'bg-indigo-500/20',
     riskLevel: 'Low'
   },
+  'Main Belt': {
+    name: 'Main Belt',
+    description: 'Asteroids located in the main asteroid belt between Mars and Jupiter.',
+    color: 'text-green-400',
+    bgColor: 'bg-green-500/20',
+    riskLevel: 'Low'
+  },
+  'Trojan': {
+    name: 'Trojan',
+    description: 'Asteroids that share an orbit with a planet, located at stable Lagrange points.',
+    color: 'text-teal-400',
+    bgColor: 'bg-teal-500/20',
+    riskLevel: 'Low'
+  },
+  'Centaur': {
+    name: 'Centaur',
+    description: 'Small Solar System bodies with orbits between Jupiter and Neptune.',
+    color: 'text-violet-400',
+    bgColor: 'bg-violet-500/20',
+    riskLevel: 'Low'
+  },
+  'Trans-Neptunian': {
+    name: 'Trans-Neptunian',
+    description: 'Objects with orbits beyond Neptune, including Kuiper Belt and scattered disc objects.',
+    color: 'text-pink-400',
+    bgColor: 'bg-pink-500/20',
+    riskLevel: 'Low'
+  },
   'Unknown': {
     name: 'Unknown',
     description: 'Orbit classification not yet determined or insufficient data.',

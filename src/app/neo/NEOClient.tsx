@@ -13,7 +13,6 @@ import {
   Globe,
   Zap
 } from 'lucide-react'
-import Navigation from '@/components/Navigation'
 import AIResponse from '@/components/AIResponse'
 import { fetchNEOData, fetchCometData, transformNEOData, transformCometData } from '@/lib/api/neo'
 import { analyzeImpactWithGemini } from '@/lib/api/gemini'
@@ -204,8 +203,7 @@ export default function NEOClient({}: NEOClientProps) {
   }
 
   return (
-    <div className="min-h-screen nasa-bg">
-      <Navigation />
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-indigo-900 relative overflow-hidden">
       
       <div className="max-w-7xl 2xl:max-w-[140rem] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-8 sm:py-12 relative z-10">
         {/* Header */}
@@ -229,7 +227,7 @@ export default function NEOClient({}: NEOClientProps) {
               transition={{ delay: 0.4, duration: 0.6 }}
               className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-300 bg-clip-text text-transparent mb-4"
             >
-              Asteroid Watch
+              Space Objects Monitor
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 10 }}
@@ -237,7 +235,7 @@ export default function NEOClient({}: NEOClientProps) {
               transition={{ delay: 0.6, duration: 0.6 }}
               className="text-base sm:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl text-gray-300 max-w-2xl xl:max-w-4xl 2xl:max-w-5xl mx-auto mb-6 sm:mb-8"
             >
-              Monitor asteroids and comets approaching Earth with real-time NASA data and AI-powered impact analysis
+              Monitor Near-Earth Objects and comets with real-time NASA data and AI-powered threat analysis
             </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -510,7 +508,7 @@ export default function NEOClient({}: NEOClientProps) {
                   </tr>
                 ) : (
                   paginatedObjects.map((obj) => (
-                    <tr key={obj.id} className="hover:bg-hover cursor-pointer" onClick={() => window.open(`/asteroid/${obj.id}`, '_blank')}>
+                    <tr key={obj.id} className="hover:bg-hover cursor-pointer" onClick={() => window.location.href = `/asteroid/${obj.id}`}>
                       <td className="font-medium text-cyan-400 hover:text-cyan-300 transition-colors text-xs sm:text-sm">
                         <div className="truncate max-w-[120px] sm:max-w-none" title={`Click to view details for ${obj.name}`}>
                           {obj.name}

@@ -36,7 +36,7 @@ export default function Navigation({}: NavigationProps) {
               Dashboard
             </a>
             <a href="/neo" className="text-gray-300 hover:text-cyan-400 transition-colors font-medium text-sm lg:text-base xl:text-lg 2xl:text-xl">
-              Asteroid Watch
+              Space Objects Monitor
             </a>
             <a href="/solar-system" className="text-gray-300 hover:text-cyan-400 transition-colors font-medium text-sm lg:text-base xl:text-lg 2xl:text-xl">
               Solar System 3D
@@ -82,7 +82,7 @@ export default function Navigation({}: NavigationProps) {
                 className="block text-gray-300 hover:text-cyan-400 py-3 px-2 transition-colors font-medium text-base rounded-lg hover:bg-cyan-500/10"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Asteroid Watch
+                Space Objects Monitor
               </a>
               <a 
                 href="/solar-system" 

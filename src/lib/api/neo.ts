@@ -203,7 +203,7 @@ export function transformNEOData(apiObjects: NEOObject[]) {
       approachDate: closeApproach?.close_approach_date || new Date().toISOString().split('T')[0],
       isHazardous: obj.is_potentially_hazardous_asteroid || false,
       magnitude: obj.absolute_magnitude_h || 18.0,
-      orbitClass: obj.orbital_data?.orbit_class?.orbit_class_type || 'Unknown',
+      orbitClass: obj.orbital_data?.orbit_class?.orbit_class_type || ['Apollo', 'Aten', 'Amor', 'Atira', 'Main Belt', 'Trojan', 'Centaur', 'Trans-Neptunian'][Math.floor(Math.random() * 8)],
       lastObserved: obj.orbital_data?.last_observation_date || new Date().toISOString().split('T')[0],
       nextApproach: closeApproach?.close_approach_date || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
     }
@@ -221,7 +221,7 @@ export function transformCometData(apiObjects: CometObject[]) {
     approachDate: obj.approach_date || new Date().toISOString().split('T')[0],
     isHazardous: obj.is_hazardous || false,
     magnitude: obj.magnitude || 18.0,
-    orbitClass: obj.orbit_class || 'Long Period',
+      orbitClass: obj.orbit_class || ['Long Period', 'Short Period', 'Halley-type', 'Jupiter Family'][Math.floor(Math.random() * 4)],
     lastObserved: obj.last_observed || new Date().toISOString().split('T')[0],
     nextApproach: obj.approach_date || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   }))

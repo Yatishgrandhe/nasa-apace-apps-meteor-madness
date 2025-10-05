@@ -1,6 +1,11 @@
+import Navigation from '@/components/Navigation'
 import NEOClient from './NEOClient'
 
 export default function NEOPage() {
-  // No user authentication required
-  return <NEOClient />
+  return (
+    <>
+      <Navigation />
+      <NEOClient />
+    </>
+  )
 }
