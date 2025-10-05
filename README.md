@@ -1,4 +1,4 @@
-# Meteor Madness 🚀
+# NEOWatch 🚀
 
 A professional Near Earth Objects monitoring system with AI analysis and real-time threat assessment, built with Next.js and powered by NASA APIs.
 

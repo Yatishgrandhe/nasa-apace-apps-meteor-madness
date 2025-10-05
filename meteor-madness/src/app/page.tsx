@@ -32,7 +32,7 @@ export default function Home() {
             transition={{ delay: 0.4, duration: 0.6 }}
             className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-300 bg-clip-text text-transparent mb-6"
           >
-            Meteor Madness
+            NEOWatch
           </motion.h1>
           
           <motion.p

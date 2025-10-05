@@ -9,7 +9,7 @@ interface AsteroidPageProps {
 
 export async function generateMetadata({ params }: AsteroidPageProps): Promise<Metadata> {
   return {
-    title: `Asteroid ${params.id} Details | Meteor Madness`,
+    title: `Asteroid ${params.id} Details | NEOWatch`,
     description: `Detailed information about asteroid ${params.id} including orbital data, size, and potential impact risk.`,
   }
 }

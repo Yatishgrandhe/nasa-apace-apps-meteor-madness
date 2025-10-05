@@ -1,4 +1,4 @@
-// Gemini AI API integration for Meteor Madness
+// Gemini AI API integration for NEOWatch
 // Provides AI-powered analysis for asteroid and comet data
 
 export interface GeminiAnalysisRequest {

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Meteor Madness - Node.js Production Server
+ * NEOWatch - Node.js Production Server
  * Optimized for Node.js runtime environments
  */
 
@@ -59,7 +59,7 @@ app.prepare().then(() => {
   })
 
   server.listen(port, () => {
-    console.log(`> Meteor Madness ready on http://${hostname}:${port}`)
+    console.log(`> NEOWatch ready on http://${hostname}:${port}`)
     console.log(`> Environment: ${process.env.NODE_ENV}`)
     console.log(`> Node.js version: ${process.version}`)
   })

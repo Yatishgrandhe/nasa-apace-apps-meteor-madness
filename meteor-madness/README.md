@@ -1,4 +1,4 @@
-# Meteor Madness - Node.js Optimized
+# NEOWatch - Node.js Optimized
 
 A professional Near Earth Objects monitoring system with AI analysis and 3D solar system visualization, optimized for Node.js production environments.
 

@@ -15,7 +15,7 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Meteor Madness",
+  title: "NEOWatch",
   description: "Professional Near Earth Objects monitoring system with AI analysis and real-time threat assessment",
 };
 

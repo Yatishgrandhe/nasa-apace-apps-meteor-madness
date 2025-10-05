@@ -1,4 +1,4 @@
-# Deployment Guide for Meteor Madness 🚀
+# Deployment Guide for NEOWatch 🚀
 
 ## Vercel Deployment (Recommended)
 
@@ -134,4 +134,4 @@
 
 ---
 
-Your Meteor Madness app is now live! 🌟
+Your NEOWatch app is now live! 🌟

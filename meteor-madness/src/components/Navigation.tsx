@@ -23,7 +23,7 @@ export default function Navigation({}: NavigationProps) {
               <Zap className="w-4 h-4 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-white" />
             </div>
             <span className="text-lg sm:text-xl lg:text-2xl xl:text-3xl 2xl:text-4xl font-bold text-cyan-400">
-              Meteor Madness
+              NEOWatch
             </span>
           </motion.div>
 
