@@ -195,7 +195,7 @@ Provide a comprehensive analysis including:
 6. Future approach predictions
 7. Scientific significance
 
-Format the response in clear sections with actionable insights.`
+Format the response in clear sections with actionable insights. Use proper markdown formatting with headers and bullet points for better readability.`
           }]
         }],
         generationConfig: {
@@ -433,30 +433,31 @@ export async function getMitigationStrategiesWithGemini(data: MitigationStrategy
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `Based on NASA's planetary defense strategies and the following asteroid data, provide detailed mitigation strategies:
+            text: `Provide mitigation strategies for asteroid ${data.name}:
 
-ASTEROID DATA:
-- Name: ${data.name}
+BASIC DATA:
 - Type: ${data.type.toUpperCase()}
-- Diameter: ${data.diameter.min}-${data.diameter.max} meters
-- Velocity: ${data.velocity} km/s
-- Miss Distance: ${data.missDistance} AU
-- Approach Date: ${data.approachDate}
+- Size: ${data.diameter.min}-${data.diameter.max}m
+- Speed: ${data.velocity} km/s
+- Distance: ${data.missDistance} AU
 - Hazardous: ${data.isHazardous}
-${data.impactProbability ? `- Impact Probability: ${data.impactProbability}` : ''}
-${data.impactEnergy ? `- Impact Energy: ${data.impactEnergy} MT TNT` : ''}
-${data.craterSize ? `- Crater Size: ${data.craterSize.diameter}m diameter, ${data.craterSize.depth}m depth` : ''}
-${data.affectedRadius ? `- Affected Radius: ${data.affectedRadius} km` : ''}
+${data.impactProbability ? `- Impact Risk: ${data.impactProbability}` : ''}
 
-Please provide a comprehensive mitigation strategy report in the following JSON format:
+CRITICAL INSTRUCTIONS:
+1. Respond with ONLY valid JSON - no markdown, no code blocks, no explanations
+2. Start your response with { and end with }
+3. Ensure all strings are properly escaped
+4. No trailing commas
+5. No text before or after the JSON
 
+Required JSON format:
 {
   "strategies": [
     {
       "category": "Detection & Tracking",
       "title": "Enhanced Monitoring",
       "description": "Detailed description of the strategy",
-      "feasibility": "high|medium|low",
+      "feasibility": "high",
       "timeframe": "Implementation timeframe",
       "effectiveness": "Expected effectiveness percentage",
       "requirements": ["requirement1", "requirement2"],
@@ -468,7 +469,7 @@ Please provide a comprehensive mitigation strategy report in the following JSON 
       "phase": "Phase name",
       "duration": "Duration",
       "description": "What happens in this phase",
-      "priority": "high|medium|low"
+      "priority": "high"
     }
   ],
   "globalCoordination": [
@@ -481,22 +482,20 @@ Please provide a comprehensive mitigation strategy report in the following JSON 
   ]
 }
 
-Include strategies for:
-1. Detection & Tracking (enhanced monitoring, radar observations)
-2. Kinetic Impactor (like NASA's DART mission)
-3. Gravity Tractor (gravitational deflection)
-4. Nuclear Deflection (for large objects with short warning)
-5. Civil Defense (evacuation, sheltering)
-6. International Coordination (IAWN, COPUOS, SMPAG)
+Include 3-4 main strategies:
+1. Detection & Tracking
+2. Kinetic Impactor (DART-style)
+3. Civil Defense
+4. International Coordination
 
-Base recommendations on NASA's Planetary Defense Strategy, DART mission results, and current international protocols.`
+Keep descriptions concise (2-3 sentences each).`
           }]
         }],
         generationConfig: {
-          temperature: 0.3,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 4096,
+          temperature: 0.2,
+          topK: 20,
+          topP: 0.8,
+          maxOutputTokens: 2048,
         }
       })
     })
@@ -516,18 +515,91 @@ Base recommendations on NASA's Planetary Defense Strategy, DART mission results,
     
     const analysisText = result.candidates?.[0]?.content?.parts?.[0]?.text || 'Mitigation analysis unavailable'
 
-    // Try to parse JSON from the response
+    // Try to parse JSON from the response with better error handling
     try {
-      const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        return {
-          ...parsed,
-          timestamp: new Date().toISOString()
-        };
+      let jsonText = '';
+      
+      // First, try to extract JSON from markdown code blocks (both ```json and ```)
+      const codeBlockMatch = analysisText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      if (codeBlockMatch) {
+        jsonText = codeBlockMatch[1].trim();
+        console.log('Found JSON in code block, extracting...');
+      } else {
+        // Fallback: Look for JSON blocks that start with { and end with }
+        const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          jsonText = jsonMatch[0];
+          console.log('Found JSON in text, extracting...');
+        }
+      }
+      
+      if (jsonText) {
+        console.log('Attempting to parse Gemini JSON response:', jsonText.substring(0, 200) + '...');
+        
+        // Clean up the JSON text - remove any remaining markdown formatting
+        jsonText = jsonText.trim();
+        
+        // Remove any text before the first { and after the last }
+        const firstBrace = jsonText.indexOf('{');
+        const lastBrace = jsonText.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+          jsonText = jsonText.substring(firstBrace, lastBrace + 1);
+        }
+        
+        // Try to fix common JSON issues
+        jsonText = jsonText
+          .replace(/,(\s*[}\]])/g, '$1') // Remove trailing commas
+          .replace(/([^\\])\\([^"\\\/bfnrt])/g, '$1\\\\$2') // Fix unescaped backslashes
+          .replace(/\n/g, '\\n') // Escape newlines in strings
+          .replace(/\r/g, '\\r') // Escape carriage returns in strings
+          .replace(/\t/g, '\\t'); // Escape tabs in strings
+        
+        const parsed = JSON.parse(jsonText);
+        
+        // Validate that we have the expected structure
+        if (parsed.strategies && Array.isArray(parsed.strategies)) {
+          console.log('Successfully parsed Gemini response with', parsed.strategies.length, 'strategies');
+          return {
+            ...parsed,
+            timestamp: new Date().toISOString()
+          };
+        } else {
+          console.warn('Gemini response missing expected structure, using mock strategies');
+          console.log('Parsed object keys:', Object.keys(parsed));
+        }
+      } else {
+        console.warn('No JSON found in Gemini response, using mock strategies');
       }
     } catch (parseError) {
-      console.warn('Failed to parse JSON from Gemini response, using mock strategies');
+      console.warn('Failed to parse JSON from Gemini response:', parseError);
+      console.log('Raw response text:', analysisText.substring(0, 500) + '...');
+      
+      // Try one more time with a more aggressive approach
+      try {
+        // Look for any text that looks like JSON between curly braces
+        const aggressiveJsonMatch = analysisText.match(/\{[\s\S]*\}/);
+        if (aggressiveJsonMatch) {
+          let jsonText = aggressiveJsonMatch[0];
+          
+          // Try to fix the most common issues
+          jsonText = jsonText
+            .replace(/,\s*}/g, '}') // Remove trailing commas before closing braces
+            .replace(/,\s*]/g, ']') // Remove trailing commas before closing brackets
+            .replace(/(\w+):/g, '"$1":') // Quote unquoted keys
+            .replace(/:(\s*)([^",{\[\s][^",}\]\]]*?)(\s*[,}\]])/g, ': "$2"$3'); // Quote unquoted string values
+          
+          const parsed = JSON.parse(jsonText);
+          if (parsed.strategies && Array.isArray(parsed.strategies)) {
+            console.log('Successfully parsed Gemini response with aggressive parsing');
+            return {
+              ...parsed,
+              timestamp: new Date().toISOString()
+            };
+          }
+        }
+      } catch (secondParseError) {
+        console.warn('Aggressive JSON parsing also failed:', secondParseError);
+      }
     }
 
     // Fallback to mock if parsing fails

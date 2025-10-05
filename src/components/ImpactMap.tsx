@@ -44,57 +44,110 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
 
     const tomtomApiKey = process.env.NEXT_PUBLIC_TOMTOM_API_KEY
     
-    // Use OpenStreetMap style for reliable rendering without API key issues
-    const mapStyle = tomtomApiKey && tomtomApiKey !== 'your_actual_tomtom_api_key_here' 
-      ? `https://api.tomtom.com/map/1/style/basic/main.json?key=${tomtomApiKey}`
-      : {
-          version: 8,
-          sources: {
-            'osm': {
-              type: 'raster',
-              tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-              tileSize: 256,
-              attribution: '© OpenStreetMap contributors'
-            }
-          },
-          layers: [
-            {
-              id: 'osm',
-              type: 'raster',
-              source: 'osm'
-            }
-          ]
+    // Beautiful map with multiple tile sources for better visual appeal and reliability
+    const mapStyle = {
+      version: 8 as const,
+      sources: {
+        'osm': {
+          type: 'raster' as const,
+          tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+          tileSize: 256,
+          attribution: '© OpenStreetMap contributors'
+        },
+        'carto-dark': {
+          type: 'raster' as const,
+          tiles: ['https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png'],
+          tileSize: 256,
+          attribution: '© CartoDB, © OpenStreetMap contributors'
+        },
+        'carto-light': {
+          type: 'raster' as const,
+          tiles: ['https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png'],
+          tileSize: 256,
+          attribution: '© CartoDB, © OpenStreetMap contributors'
         }
+      },
+      layers: [
+        {
+          id: 'osm-base',
+          type: 'raster' as const,
+          source: 'osm',
+          paint: {
+            'raster-opacity': 0.8
+          }
+        },
+        {
+          id: 'carto-dark-overlay',
+          type: 'raster' as const,
+          source: 'carto-dark',
+          paint: {
+            'raster-opacity': 0.4
+          }
+        },
+        {
+          id: 'carto-light-overlay',
+          type: 'raster' as const,
+          source: 'carto-light',
+          paint: {
+            'raster-opacity': 0.2
+          }
+        }
+      ]
+    }
 
     try {
-      // Initialize MapLibre GL JS
+      // Initialize MapLibre GL JS with beautiful styling
       const map = new maplibregl.Map({
         container: mapRef.current,
         style: mapStyle,
         center: [impactPrediction.impactLocation.longitude, impactPrediction.impactLocation.latitude],
         zoom: 8,
-        pitch: 0,
-        bearing: 0
+        pitch: 45,
+        bearing: 0,
+        maxZoom: 18,
+        minZoom: 2,
+        maxBounds: [[-180, -85], [180, 85]],
+        fadeDuration: 300
       })
 
       map.on('load', () => {
         setMapLoaded(true)
 
-        // Add impact prediction marker
-        new maplibregl.Marker({
-          color: '#ff4444',
-          scale: 1.5
-        })
+        // Add beautiful impact prediction marker with custom HTML
+        const impactMarker = document.createElement('div')
+        impactMarker.className = 'impact-marker'
+        impactMarker.style.cssText = `
+          width: 40px;
+          height: 40px;
+          background: radial-gradient(circle, #ff4444 0%, #ff0000 70%, #cc0000 100%);
+          border: 3px solid #ffffff;
+          border-radius: 50%;
+          box-shadow: 0 0 20px #ff4444, 0 0 40px #ff4444, inset 0 0 10px rgba(255,255,255,0.3);
+          animation: pulse-impact 2s ease-in-out infinite;
+          position: relative;
+        `
+        
+        // Add pulsing animation
+        const style = document.createElement('style')
+        style.textContent = `
+          @keyframes pulse-impact {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 20px #ff4444, 0 0 40px #ff4444, inset 0 0 10px rgba(255,255,255,0.3); }
+            50% { transform: scale(1.2); box-shadow: 0 0 30px #ff4444, 0 0 60px #ff4444, inset 0 0 15px rgba(255,255,255,0.5); }
+          }
+        `
+        document.head.appendChild(style)
+
+        new maplibregl.Marker(impactMarker)
           .setLngLat([impactPrediction.impactLocation.longitude, impactPrediction.impactLocation.latitude])
           .addTo(map)
 
         // Add impact zone circle using GeoJSON
         const impactZoneGeoJSON = {
-          type: 'FeatureCollection',
+          type: 'FeatureCollection' as const,
           features: [{
-            type: 'Feature',
+            type: 'Feature' as const,
             geometry: {
-              type: 'Point',
+              type: 'Point' as const,
               coordinates: [impactPrediction.impactLocation.longitude, impactPrediction.impactLocation.latitude]
             },
             properties: {
@@ -105,11 +158,11 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
 
         // Add crater zone circle using GeoJSON
         const craterZoneGeoJSON = {
-          type: 'FeatureCollection',
+          type: 'FeatureCollection' as const,
           features: [{
-            type: 'Feature',
+            type: 'Feature' as const,
             geometry: {
-              type: 'Point',
+              type: 'Point' as const,
               coordinates: [impactPrediction.impactLocation.longitude, impactPrediction.impactLocation.latitude]
             },
             properties: {
@@ -133,11 +186,64 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
               property: 'radius',
               type: 'identity'
             },
-            'circle-color': '#ff4444',
-            'circle-opacity': 0.3,
+            'circle-color': [
+              'interpolate',
+              ['linear'],
+              ['get', 'radius'],
+              0, '#ff4444',
+              10000, '#ff6666',
+              50000, '#ff8888'
+            ],
+            'circle-opacity': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              8, 0.2,
+              12, 0.3,
+              16, 0.4
+            ],
             'circle-stroke-color': '#ff4444',
             'circle-stroke-opacity': 0.8,
-            'circle-stroke-width': 2
+            'circle-stroke-width': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              8, 1,
+              12, 2,
+              16, 3
+            ]
+          }
+        })
+
+        // Add animated ripple effect for impact zone
+        map.addLayer({
+          id: 'impact-zone-ripple',
+          type: 'circle',
+          source: 'impact-zone',
+          paint: {
+            'circle-radius': {
+              property: 'radius',
+              type: 'identity'
+            },
+            'circle-color': '#ff4444',
+            'circle-opacity': [
+              'interpolate',
+              ['linear'],
+              ['get', 'radius'],
+              0, 0.4,
+              25000, 0.2,
+              50000, 0
+            ],
+            'circle-stroke-color': '#ff4444',
+            'circle-stroke-opacity': [
+              'interpolate',
+              ['linear'],
+              ['get', 'radius'],
+              0, 0.6,
+              25000, 0.3,
+              50000, 0
+            ],
+            'circle-stroke-width': 1
           }
         })
 
@@ -156,11 +262,57 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
               property: 'radius',
               type: 'identity'
             },
-            'circle-color': '#ff6666',
-            'circle-opacity': 0.6,
-            'circle-stroke-color': '#ff6666',
+            'circle-color': [
+              'interpolate',
+              ['linear'],
+              ['get', 'radius'],
+              0, '#ff0000',
+              100, '#ff4444',
+              500, '#ff6666'
+            ],
+            'circle-opacity': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              8, 0.4,
+              12, 0.6,
+              16, 0.8
+            ],
+            'circle-stroke-color': '#ff0000',
             'circle-stroke-opacity': 1,
-            'circle-stroke-width': 3
+            'circle-stroke-width': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              8, 2,
+              12, 3,
+              16, 4
+            ]
+          }
+        })
+
+        // Add enhanced crater visualization with heat effect
+        map.addLayer({
+          id: 'crater-heat-zone',
+          type: 'circle',
+          source: 'crater-zone',
+          paint: {
+            'circle-radius': {
+              property: 'radius',
+              type: 'identity'
+            },
+            'circle-color': '#ff8800',
+            'circle-opacity': [
+              'interpolate',
+              ['linear'],
+              ['get', 'radius'],
+              0, 0.3,
+              100, 0.2,
+              500, 0.1
+            ],
+            'circle-stroke-color': '#ff4400',
+            'circle-stroke-opacity': 0.4,
+            'circle-stroke-width': 1
           }
         })
 
@@ -219,8 +371,6 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
     }
   }
 
-  const currentScenario = scenarios.find(s => s.scenario === selectedScenario) || impactPrediction
-
   if (!impactPrediction) {
     return (
       <div className={`bg-black/40 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 shadow-lg glow-blue ${className}`}>
@@ -231,6 +381,8 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
       </div>
     )
   }
+
+  const currentScenario = scenarios.find(s => s.scenario === selectedScenario) || impactPrediction
 
   // Calculate visual scale factors for impact zones (fallback visualization)
   const maxRadius = Math.max(currentScenario.affectedRadius, currentScenario.craterSize.diameter / 1000)
@@ -321,71 +473,139 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
                   style={{ minHeight: '300px' }}
                 />
                 
-                {/* Zoom Controls */}
+                {/* Enhanced Map Controls */}
                 {mapLoaded && (mapInstance || (mapRef.current as any)?.maplibreMap) && (
-                  <div className="absolute top-4 right-4 flex flex-col space-y-2 z-10">
+                  <div className="absolute top-4 right-4 flex flex-col space-y-3 z-10">
+                    {/* Navigation Controls */}
+                    <div className="flex flex-col space-y-2">
                     <button
                       onClick={zoomIn}
-                      className="p-2 bg-black/80 backdrop-blur-sm border border-cyan-500/30 hover:border-cyan-400 text-cyan-400 rounded-lg transition-colors shadow-lg"
+                        className="group p-3 bg-gradient-to-br from-black/90 to-gray-900/90 backdrop-blur-md border border-cyan-500/40 hover:border-cyan-400 text-cyan-400 rounded-xl transition-all duration-300 shadow-xl hover:shadow-cyan-500/25 hover:scale-105"
                       title="Zoom In"
                     >
-                      <Plus className="w-4 h-4" />
+                        <Plus className="w-5 h-5 group-hover:scale-110 transition-transform" />
                     </button>
                     <button
                       onClick={zoomOut}
-                      className="p-2 bg-black/80 backdrop-blur-sm border border-cyan-500/30 hover:border-cyan-400 text-cyan-400 rounded-lg transition-colors shadow-lg"
+                        className="group p-3 bg-gradient-to-br from-black/90 to-gray-900/90 backdrop-blur-md border border-cyan-500/40 hover:border-cyan-400 text-cyan-400 rounded-xl transition-all duration-300 shadow-xl hover:shadow-cyan-500/25 hover:scale-105"
                       title="Zoom Out"
                     >
-                      <Minus className="w-4 h-4" />
+                        <Minus className="w-5 h-5 group-hover:scale-110 transition-transform" />
                     </button>
                     <button
                       onClick={resetView}
-                      className="p-2 bg-black/80 backdrop-blur-sm border border-cyan-500/30 hover:border-cyan-400 text-cyan-400 rounded-lg transition-colors shadow-lg"
+                        className="group p-3 bg-gradient-to-br from-black/90 to-gray-900/90 backdrop-blur-md border border-cyan-500/40 hover:border-cyan-400 text-cyan-400 rounded-xl transition-all duration-300 shadow-xl hover:shadow-cyan-500/25 hover:scale-105"
                       title="Reset View"
                     >
-                      <Target className="w-4 h-4" />
+                        <Target className="w-5 h-5 group-hover:scale-110 transition-transform" />
                     </button>
+                    </div>
+
+                    {/* Map Style Toggle - Only show if layers are available */}
+                    {mapInstance && mapInstance.getLayer('carto-light-overlay') && mapInstance.getLayer('carto-dark-overlay') && (
+                      <div className="bg-gradient-to-br from-black/90 to-gray-900/90 backdrop-blur-md border border-cyan-500/40 rounded-xl p-2">
+                        <div className="text-xs text-cyan-400 text-center mb-2 font-medium">Map Style</div>
+                        <div className="flex space-x-1">
+                          <button
+                            onClick={() => {
+                              const map = mapInstance
+                              if (map && map.getLayer('carto-light-overlay') && map.getLayer('carto-dark-overlay')) {
+                                try {
+                                  map.setPaintProperty('carto-light-overlay', 'raster-opacity', 0.1)
+                                  map.setPaintProperty('carto-dark-overlay', 'raster-opacity', 0.8)
+                                } catch (error) {
+                                  console.warn('Failed to set dark theme:', error)
+                                }
+                              }
+                            }}
+                            className="w-8 h-8 bg-gray-800 hover:bg-gray-700 rounded-lg border border-gray-600 hover:border-gray-500 transition-colors"
+                            title="Dark Theme"
+                          />
+                          <button
+                            onClick={() => {
+                              const map = mapInstance
+                              if (map && map.getLayer('carto-light-overlay') && map.getLayer('carto-dark-overlay')) {
+                                try {
+                                  map.setPaintProperty('carto-light-overlay', 'raster-opacity', 0.8)
+                                  map.setPaintProperty('carto-dark-overlay', 'raster-opacity', 0.2)
+                                } catch (error) {
+                                  console.warn('Failed to set light theme:', error)
+                                }
+                              }
+                            }}
+                            className="w-8 h-8 bg-white hover:bg-gray-100 rounded-lg border border-gray-300 hover:border-gray-400 transition-colors"
+                            title="Light Theme"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
         
                 {!mapLoaded && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-gray-900/50 rounded-b-xl">
+                  <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-900/80 via-black/60 to-gray-800/80 rounded-b-xl backdrop-blur-sm">
                     <div className="text-center">
-                      <div className="w-12 h-12 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin mx-auto mb-4"></div>
-                      <p className="text-cyan-400">Loading Impact Map...</p>
-                      <p className="text-gray-400 text-sm mt-2">Initializing MapLibre GL JS...</p>
+                      <div className="relative mb-6">
+                        <div className="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin mx-auto"></div>
+                        <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-r-cyan-400/50 rounded-full animate-spin mx-auto" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+                      </div>
+                      <p className="text-cyan-400 text-lg font-medium">Loading Impact Map...</p>
+                      <p className="text-gray-400 text-sm mt-2">Initializing beautiful map visualization...</p>
+                      <div className="mt-4 flex justify-center space-x-1">
+                        <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
+                        <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                        <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                      </div>
                     </div>
                   </div>
                 )}
 
-        {/* Fallback Custom Visualization when map fails to load */}
+        {/* Enhanced Fallback Custom Visualization when map fails to load */}
         {mapLoaded && !(mapRef.current as any)?.maplibreMap && (
-          <div className="absolute inset-0 bg-gradient-to-b from-blue-900 via-blue-800 to-green-800 rounded-b-xl overflow-hidden">
-            {/* Earth surface pattern */}
-            <div className="absolute inset-0 opacity-30">
-              <div className="w-full h-full bg-gradient-radial from-green-600/20 via-blue-600/10 to-transparent"></div>
-              <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-green-500/10 rounded-full"></div>
-              <div className="absolute top-3/4 right-1/4 w-24 h-24 bg-green-500/10 rounded-full"></div>
-              <div className="absolute bottom-1/4 left-1/3 w-20 h-20 bg-green-500/10 rounded-full"></div>
-              <div className="absolute top-1/2 right-1/3 w-16 h-16 bg-green-500/10 rounded-full"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-emerald-900 rounded-b-xl overflow-hidden">
+            {/* Beautiful Earth-like background with animated elements */}
+            <div className="absolute inset-0">
+              <div className="w-full h-full bg-gradient-radial from-emerald-600/30 via-blue-600/20 to-slate-800/40"></div>
+              
+              {/* Animated floating continents */}
+              <div className="absolute top-1/4 left-1/4 w-40 h-40 bg-emerald-500/15 rounded-full animate-pulse" style={{ animationDuration: '4s' }}></div>
+              <div className="absolute top-3/4 right-1/4 w-32 h-32 bg-green-500/20 rounded-full animate-pulse" style={{ animationDuration: '3s', animationDelay: '1s' }}></div>
+              <div className="absolute bottom-1/4 left-1/3 w-28 h-28 bg-blue-500/15 rounded-full animate-pulse" style={{ animationDuration: '5s', animationDelay: '2s' }}></div>
+              <div className="absolute top-1/2 right-1/3 w-24 h-24 bg-teal-500/20 rounded-full animate-pulse" style={{ animationDuration: '3.5s', animationDelay: '0.5s' }}></div>
+              
+              {/* Additional decorative elements */}
+              <div className="absolute top-1/6 left-1/6 w-16 h-16 bg-cyan-500/10 rounded-full animate-bounce" style={{ animationDuration: '6s' }}></div>
+              <div className="absolute bottom-1/6 right-1/6 w-20 h-20 bg-indigo-500/15 rounded-full animate-bounce" style={{ animationDuration: '4s', animationDelay: '1s' }}></div>
             </div>
 
-            {/* Grid lines for reference */}
-            <div className="absolute inset-0 opacity-20">
+            {/* Enhanced grid lines with glow effect */}
+            <div className="absolute inset-0 opacity-15">
               <div className="w-full h-full">
-                {/* Latitude lines */}
-                {[0.25, 0.5, 0.75].map((y, i) => (
-                  <div key={i} className="absolute w-full border-t border-white/20" style={{ top: `${y * 100}%` }}></div>
+                {/* Latitude lines with gradient */}
+                {[0.2, 0.4, 0.6, 0.8].map((y, i) => (
+                  <div key={i} className="absolute w-full border-t border-gradient-to-r from-transparent via-cyan-400/30 to-transparent" style={{ top: `${y * 100}%` }}></div>
                 ))}
-                {/* Longitude lines */}
-                {[0.25, 0.5, 0.75].map((x, i) => (
-                  <div key={i} className="absolute h-full border-l border-white/20" style={{ left: `${x * 100}%` }}></div>
+                {/* Longitude lines with gradient */}
+                {[0.2, 0.4, 0.6, 0.8].map((x, i) => (
+                  <div key={i} className="absolute h-full border-l border-gradient-to-b from-transparent via-cyan-400/30 to-transparent" style={{ left: `${x * 100}%` }}></div>
                 ))}
               </div>
             </div>
 
-            {/* Impact visualization */}
+            {/* Enhanced Impact visualization */}
             <div className="absolute inset-0 flex items-center justify-center">
+              {/* Outer blast wave */}
+              <div 
+                className="absolute border-2 border-orange-400/30 rounded-full animate-pulse"
+                style={{ 
+                  width: `${affectedRadiusPx * 2}px`,
+                  height: `${affectedRadiusPx * 2}px`,
+                  animationDuration: '6s'
+                }}
+              >
+                <div className="absolute inset-0 rounded-full bg-gradient-radial from-orange-500/5 to-transparent"></div>
+              </div>
+              
               {/* Affected area circle */}
               <div 
                 className="absolute border-2 border-red-500/60 rounded-full animate-pulse"
@@ -395,7 +615,8 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
                   animationDuration: '3s'
                 }}
               >
-                <div className="absolute inset-0 rounded-full bg-red-500/10"></div>
+                <div className="absolute inset-0 rounded-full bg-gradient-radial from-red-500/20 to-red-500/5"></div>
+                <div className="absolute inset-0 rounded-full bg-red-500/10 animate-ping" style={{ animationDuration: '3s' }}></div>
               </div>
               
               {/* Secondary blast wave */}
@@ -407,21 +628,25 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
                   animation: 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite'
                 }}
               >
-                <div className="absolute inset-0 rounded-full bg-red-400/5"></div>
+                <div className="absolute inset-0 rounded-full bg-gradient-radial from-red-400/8 to-transparent"></div>
               </div>
               
-              {/* Crater zone circle */}
+              {/* Crater zone circle with heat effect */}
               <div 
-                className="absolute border-2 border-red-400 rounded-full bg-red-500/20"
+                className="absolute border-2 border-red-400 rounded-full"
                 style={{ 
                   width: `${craterRadiusPx}px`,
                   height: `${craterRadiusPx}px`
                 }}
-              ></div>
+              >
+                <div className="absolute inset-0 rounded-full bg-gradient-radial from-red-500/30 via-orange-500/20 to-yellow-500/10"></div>
+                <div className="absolute inset-0 rounded-full bg-red-500/20 animate-pulse" style={{ animationDuration: '2s' }}></div>
+              </div>
               
-              {/* Impact point marker */}
-              <div className="absolute w-6 h-6 bg-red-500 rounded-full border-2 border-white shadow-lg animate-pulse">
-                <div className="absolute inset-0 rounded-full bg-red-400 animate-ping"></div>
+              {/* Enhanced impact point marker */}
+              <div className="absolute w-8 h-8 bg-gradient-radial from-red-500 via-red-600 to-red-800 rounded-full border-2 border-white shadow-xl animate-pulse">
+                <div className="absolute inset-0 rounded-full bg-red-400 animate-ping" style={{ animationDuration: '1.5s' }}></div>
+                <div className="absolute inset-1 rounded-full bg-white/30"></div>
               </div>
             </div>
 
@@ -448,33 +673,66 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
           </div>
         )}
 
-        {/* Map Legend */}
-        <div className="absolute bottom-4 left-4 bg-black/80 backdrop-blur-sm border border-cyan-500/30 rounded-lg p-4 text-white text-sm">
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse"></div>
-              <span>Predicted Impact Point</span>
+        {/* Enhanced Map Legend */}
+        <div className="absolute bottom-4 left-4 bg-gradient-to-br from-black/90 to-gray-900/90 backdrop-blur-md border border-cyan-500/40 rounded-xl p-4 text-white text-sm shadow-xl">
+          <div className="text-cyan-400 font-medium mb-3 text-center">Impact Analysis</div>
+          <div className="space-y-3">
+            {/* Impact Location Info */}
+            <div className="bg-blue-900/30 rounded-lg p-3 border border-blue-500/30">
+              <div className="flex items-center space-x-2 mb-2">
+                <div className={`w-3 h-3 rounded-full ${currentScenario.impactLocation.isLand ? 'bg-green-400' : 'bg-blue-400'}`}></div>
+                <span className="text-xs font-medium">
+                  {currentScenario.impactLocation.isLand ? 'Land Impact' : 'Ocean Impact'}
+                </span>
+              </div>
+              <div className="text-xs text-gray-300">
+                <div>{currentScenario.impactLocation.country}</div>
+                <div className="text-gray-400">{currentScenario.impactLocation.region}</div>
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-red-400 rounded-full border border-red-400"></div>
-              <span>Crater Zone ({currentScenario.craterSize.diameter.toFixed(0)}m)</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-red-500/60 rounded-full border border-red-500"></div>
-              <span>Affected Area ({currentScenario.affectedRadius.toFixed(1)}km)</span>
+            
+            {/* Impact Zones */}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-3">
+                <div className="relative">
+                  <div className="w-5 h-5 bg-gradient-radial from-red-500 via-red-600 to-red-800 rounded-full border border-white shadow-lg"></div>
+                  <div className="absolute inset-0 w-5 h-5 bg-red-400 animate-ping rounded-full"></div>
+                </div>
+                <span className="text-sm">Impact Point</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-5 h-5 bg-gradient-radial from-red-500/30 via-orange-500/20 to-yellow-500/10 rounded-full border-2 border-red-400"></div>
+                <span className="text-sm">Crater Zone ({currentScenario.craterSize.diameter.toFixed(0)}m)</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-5 h-5 bg-gradient-radial from-red-500/20 to-red-500/5 rounded-full border-2 border-red-500/60"></div>
+                <span className="text-sm">Affected Area ({currentScenario.affectedRadius.toFixed(1)}km)</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-5 h-5 bg-gradient-radial from-orange-500/5 to-transparent rounded-full border-2 border-orange-400/30"></div>
+                <span className="text-sm">Blast Wave</span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Warning Notice */}
+        {/* Enhanced Warning Notice */}
         {currentScenario.impactProbability > 0.01 && (
-          <div className="absolute top-4 right-4 bg-red-900/80 backdrop-blur-sm border border-red-500/50 rounded-lg p-3 text-red-200 text-sm max-w-xs">
-            <div className="flex items-start space-x-2">
-              <AlertTriangle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
+          <div className="absolute top-4 right-4 bg-gradient-to-br from-red-900/90 to-red-800/80 backdrop-blur-md border border-red-500/60 rounded-xl p-4 text-red-200 text-sm max-w-xs shadow-xl animate-pulse">
+            <div className="flex items-start space-x-3">
+              <div className="relative">
+                <AlertTriangle className="w-6 h-6 text-red-400 flex-shrink-0" />
+                <div className="absolute inset-0 w-6 h-6 text-red-400 animate-ping">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+              </div>
               <div>
-                <div className="font-semibold text-red-300">High Impact Risk</div>
-                <div className="text-xs mt-1">
-                  This asteroid has a significant impact probability. Monitor closely for orbital updates.
+                <div className="font-bold text-red-300 text-base">High Impact Risk</div>
+                <div className="text-xs mt-2 leading-relaxed">
+                  This asteroid has a significant impact probability. Monitor closely for orbital updates and coordinate with planetary defense agencies.
+                </div>
+                <div className="mt-2 text-xs text-red-400 font-medium">
+                  Risk Level: {currentScenario.riskLevel}
                 </div>
               </div>
             </div>
@@ -498,12 +756,18 @@ export default function ImpactMap({ asteroid, className = '' }: ImpactMapProps) 
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">Country:</span>
+                <span className="text-gray-400">Location:</span>
                 <span className="text-white">{currentScenario.impactLocation.country || 'Unknown'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Region:</span>
                 <span className="text-white">{currentScenario.impactLocation.region || 'Unknown'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Surface:</span>
+                <span className={`${currentScenario.impactLocation.isLand ? 'text-green-400' : 'text-blue-400'}`}>
+                  {currentScenario.impactLocation.isLand ? 'Land' : 'Ocean'}
+                </span>
               </div>
             </div>
           </div>
